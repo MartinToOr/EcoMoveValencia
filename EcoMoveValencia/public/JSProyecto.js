@@ -19,34 +19,34 @@ let inicio;
 		      modes.forEach(mode => {
 		          let url;
 		          if (mode === "Valenbisi") {
-		              url = "http://192.168.18.201:3000/api/buscaEstacionBici?Olat=" + pointA.lat + "&Olng=" + pointA.lng +
+		              url = "https://ecomovevalencia.onrender.com/api/buscaEstacionBici?Olat=" + pointA.lat + "&Olng=" + pointA.lng +
 		                    "&Dlat=" + pointB.lat + "&Dlng=" + pointB.lng + "&ignoreAviabilityO=0&ignoreAviabilityD=0";
 		          } else if (mode === "METRO") {
-		              url = "http://192.168.18.201:3000/rutaTansPub?oLat=" + pointA.lat + "&oLng=" + pointA.lng +
+		              url = "https://ecomovevalencia.onrender.com/rutaTansPub?oLat=" + pointA.lat + "&oLng=" + pointA.lng +
 		                    "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&tm=subway|tram";
 		          } else if (mode === "BUS") {
-		              url = "http://192.168.18.201:3000/rutaTansPub?oLat=" + pointA.lat + "&oLng=" + pointA.lng +
+		              url = "https://ecomovevalencia.onrender.com/rutaTansPub?oLat=" + pointA.lat + "&oLng=" + pointA.lng +
 		                    "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&tm=bus";
 		          }
 				  else if (mode === "TRAIN") {
-				  	url = "http://192.168.18.201:3000/rutaTansPub?oLat=" + pointA.lat + "&oLng=" + pointA.lng +
+				  	url = "https://ecomovevalencia.onrender.com/rutaTansPub?oLat=" + pointA.lat + "&oLng=" + pointA.lng +
 				  		     "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&tm=train";
 				  		          }	
 			     else if (mode === "PATINETE") {
-					url = "http://192.168.18.201:3000/rutaTransportTipical?oLat=" + pointA.lat + "&oLng=" + pointA.lng +
+					url = "https://ecomovevalencia.onrender.com/rutaTransportTipical?oLat=" + pointA.lat + "&oLng=" + pointA.lng +
 							   "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&mode=bicycling";
 								  	 }	
 				else if (mode === "ELECTRIC_MOTORBIKE"){
-					url = "http://192.168.18.201:3000/rutaMotoElectrica?oLat=" + pointA.lat + "&oLng=" + pointA.lng +
+					url = "https://ecomovevalencia.onrender.com/rutaMotoElectrica?oLat=" + pointA.lat + "&oLng=" + pointA.lng +
 							"&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&mode=driving";
 				}							
 				else if (mode === "TAXI"){
-					url ="http://192.168.18.201:3000/api/buscaEstacionTaxi?Olat=" + pointA.lat + "&Olng=" + pointA.lng +
+					url ="https://ecomovevalencia.onrender.com/api/buscaEstacionTaxi?Olat=" + pointA.lat + "&Olng=" + pointA.lng +
 							                    "&Dlat=" + pointB.lat + "&Dlng=" + pointB.lng;
 				}		  
 				   else {
 		              // Para WALKING, DRIVING y BICYCLING se utiliza el endpoint de rutas típicas
-		              url = "http://192.168.18.201:3000/rutaTransportTipical?oLat=" + pointA.lat + "&oLng=" + pointA.lng +
+		              url = "https://ecomovevalencia.onrender.com/rutaTransportTipical?oLat=" + pointA.lat + "&oLng=" + pointA.lng +
 		                    "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&mode=" + mode.toLocaleLowerCase();
 		          }
 					console.log(mode + ": " + url);
@@ -811,7 +811,7 @@ function muestraRutaMetroValencia(){
 
 			
 
-			  			    const peticionBUS = "http://192.168.18.201:3000/rutaTansPub?oLat=" + pointA.lat + "&oLng=" + pointA.lng + "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&tm=subway|tram";
+			  			    const peticionBUS = "https://ecomovevalencia.onrender.com/rutaTansPub?oLat=" + pointA.lat + "&oLng=" + pointA.lng + "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&tm=subway|tram";
 
 			  			    // Función para obtener la ruta en bus
 
@@ -904,7 +904,7 @@ function muestraRutaMetroValencia(){
 function muestraRutaEMTValencia(){
 
 
-			    const peticionBUS = "http://192.168.18.201:3000/rutaTansPub?oLat=" + pointA.lat + "&oLng=" + pointA.lng + "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&tm=bus";
+			    const peticionBUS = "https://ecomovevalencia.onrender.com/rutaTansPub?oLat=" + pointA.lat + "&oLng=" + pointA.lng + "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&tm=bus";
 
 			    // Función para obtener la ruta en bus
 			    const PeticionBus = async () => {
@@ -994,7 +994,7 @@ function muestraRutaEMTValencia(){
 function muestraRutaRodalia(){
 
 
-			    const peticionRod = "http://192.168.18.201:3000/rutaTansPub?oLat=" + pointA.lat + "&oLng=" + pointA.lng + "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&tm=train";
+			    const peticionRod = "https://ecomovevalencia.onrender.com/rutaTansPub?oLat=" + pointA.lat + "&oLng=" + pointA.lng + "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&tm=train";
 
 			    // Función para obtener la ruta en bus
 			    const PeticionRod = async () => {
@@ -1088,7 +1088,7 @@ function muestraRutaPatinete(){
 	                  // Resto de modos de transporte (por ejemplo, TRANSIT, DRIVING, etc.)
 
 		  
-					  const peticionPat = "http://192.168.18.201:3000/rutaTransportTipical?oLat=" + pointA.lat + "&oLng=" + pointA.lng + "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&mode=bicycling";
+					  const peticionPat = "https://ecomovevalencia.onrender.com/rutaTransportTipical?oLat=" + pointA.lat + "&oLng=" + pointA.lng + "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&mode=bicycling";
 					  console.log(peticionPat);
 					  
 					  		    const PeticionPatinete = async () => {
@@ -1172,7 +1172,7 @@ function muestraRutaTipica(modoImp){
 	                  // Resto de modos de transporte (por ejemplo, TRANSIT, DRIVING, etc.)
 					  let modotrans = transportMode.toLowerCase();
 		  
-					  const peticionTip = "http://192.168.18.201:3000/rutaTransportTipical?oLat=" + pointA.lat + "&oLng=" + pointA.lng + "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&mode="+modotrans ;
+					  const peticionTip = "https://ecomovevalencia.onrender.com/rutaTransportTipical?oLat=" + pointA.lat + "&oLng=" + pointA.lng + "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&mode="+modotrans ;
 
 					  		    const PeticionTipica = async () => {
 					  		        try {
@@ -1254,7 +1254,7 @@ function muestraRutaELECTRIC_MOTORBIKE(transporteImp){
 	                  // Resto de modos de transporte (por ejemplo, TRANSIT, DRIVING, etc.)
 					  let modotrans = transportMode.toLowerCase();
 		  
-					  const peticionMOTORBIKE = "http://192.168.18.201:3000/rutaMotoElectrica?oLat=" + pointA.lat + "&oLng=" + pointA.lng + "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&mode=driving" ;
+					  const peticionMOTORBIKE = "https://ecomovevalencia.onrender.com/rutaMotoElectrica?oLat=" + pointA.lat + "&oLng=" + pointA.lng + "&dLat=" + pointB.lat + "&dLng=" + pointB.lng + "&mode=driving" ;
 
 					  		    const funcpeticionMOTORBIKE = async () => {
 					  		        try {
@@ -1330,7 +1330,7 @@ function muestraRutaValenbisi(){
 	toggleTransport("bici");	
 	sincronizarSelectorPersonalizado("bici");	
 
-	const urlBICI = "http://192.168.18.201:3000/api/buscaEstacionBici?Olat="+pointA.lat+"&Olng="+pointA.lng+"&Dlat="+pointB.lat+"&Dlng="+pointB.lng+"&ignoreAviabilityO=0&ignoreAviabilityD=0";
+	const urlBICI = "https://ecomovevalencia.onrender.com/api/buscaEstacionBici?Olat="+pointA.lat+"&Olng="+pointA.lng+"&Dlat="+pointB.lat+"&Dlng="+pointB.lng+"&ignoreAviabilityO=0&ignoreAviabilityD=0";
 
 	// Función para obtener la ruta en bus
 	const peticionBICI = async () => {
@@ -1412,7 +1412,7 @@ function muestraRutaTaxi(){
 	toggleTransport("taxi");
 	sincronizarSelectorPersonalizado("taxi");	
 
-	const urlTAXI = "http://192.168.18.201:3000/api/buscaEstacionTaxi?Olat="+pointA.lat+"&Olng="+pointA.lng+"&Dlat="+pointB.lat+"&Dlng="+pointB.lng;
+	const urlTAXI = "https://ecomovevalencia.onrender.com/api/buscaEstacionTaxi?Olat="+pointA.lat+"&Olng="+pointA.lng+"&Dlat="+pointB.lat+"&Dlng="+pointB.lng;
 
 	// Función para obtener la ruta en bus
 	const peticionTAXI = async () => {
@@ -2337,10 +2337,10 @@ function loadAllData() {
 
 	var promises = [
 	     
-		   loadAllMetroStations("http://192.168.18.201:3000/api/getMetro"),		  
-	       loadBusStations("http://192.168.18.201:3000/api/getBus"),
-		   loadRodaliaStations("http://192.168.18.201:3000/api/getRodalia"),
-		   loadTaxiStations("http://192.168.18.201:3000/api/getTaxis"),
+		   loadAllMetroStations("https://ecomovevalencia.onrender.com/api/getMetro"),		  
+	       loadBusStations("https://ecomovevalencia.onrender.com/api/getBus"),
+		   loadRodaliaStations("https://ecomovevalencia.onrender.com/api/getRodalia"),
+		   loadTaxiStations("https://ecomovevalencia.onrender.com/api/getTaxis"),
 	       loadValenBisiStations("https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=100"),
 	       loadValenBisiStations("https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=100&offset=100"),
 	       loadValenBisiStations("https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=73&offset=200")
