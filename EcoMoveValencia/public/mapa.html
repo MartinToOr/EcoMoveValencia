@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoMove Valencia</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
+<style>
+
+
+/* 
+<a href="https://www.flaticon.es/iconos-gratis/caminante" title="caminante iconos">Caminante iconos creados por Trazobanana - Flaticon</a>
+ <a href="https://www.flaticon.es/iconos-gratis/transporte" title="transporte iconos">Transporte iconos creados por Vector Stall - Flaticon</a>
+<a href="https://www.flaticon.es/iconos-gratis/bicicleta" title="bicicleta iconos">Bicicleta iconos creados por Freepik - Flaticon</a>
+<a href="https://www.flaticon.es/iconos-gratis/moto-electrica" title="moto electrica iconos">Moto electrica iconos creados por Satrio - Flaticon</a>
+<a href="https://www.flaticon.es/iconos-gratis/transporte" title="transporte iconos">Transporte iconos creados por Ctrlastudio - Flaticon</a>
+<a href="https://www.flaticon.es/iconos-gratis/transporte-publico" title="transporte público iconos">Transporte público iconos creados por Royyan Wijaya - Flaticon</a>
+ attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://hotosm.org">Humanitarian OpenStreetMap Team</a>'
+<a href="https://www.flaticon.es/iconos-gratis/buscar" title="buscar iconos">Buscar iconos creados por Freepik - Flaticon</a>
+<a href="https://www.flaticon.es/iconos-gratis/error" title="error iconos">Error iconos creados por IconBaandar - Flaticon</a>
+<a href="https://www.flaticon.es/iconos-gratis/advertencia" title="advertencia iconos">Advertencia iconos creados por surang - Flaticon</a>
+*/
+
+
+	#btnMostrarModal {
+    position: fixed;
+    top: 200px;
+    left: 70px;
+    padding: 10px 15px;
+    background: rgba(73, 163, 13, 1);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: none;
+    z-index: 9999;
+}
+
+   .custom-select-container {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      z-index: 1000;
+      width: 200px;
+    }
+    
+    .custom-select-header {
+      background-color: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.375rem;
+      padding: 0.5rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      position: relative;
+      z-index: 2; /* Asegura que el encabezado esté por encima de las opciones */
+    }
+    
+    .custom-select-options {
+      position: absolute;
+      bottom: 100%; /* Cambiado de top a bottom para que se despliegue hacia arriba */
+      left: 0;
+      right: 0;
+      margin-bottom: 0.25rem; /* Cambiado de margin-top a margin-bottom */
+      background-color: white;
+      border-radius: 0.375rem;
+      box-shadow: 0 -4px 6px -1px rgba(0,0,0,0.1), 0 -2px 4px -1px rgba(0,0,0,0.06); /* Sombra ajustada para dirección hacia arriba */
+      overflow: hidden;
+      display: none;
+      z-index: 1;
+    }
+    
+    .custom-select-option {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    
+    .custom-select-option:hover {
+      background-color: #f3f4f6;
+    }
+    
+    .custom-select-option.selected {
+      background-color: #10b981;
+      color: white;
+    }
+    
+    /* Ocultar el select nativo pero mantenerlo para accesibilidad */
+    .native-select {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+
+#btnRepetirOrigenDestino{
+    position: fixed;
+    top: 200px;
+    left: 70px;
+    padding: 10px 15px;
+    background: rgba(73, 163, 13, 1);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: none;
+    z-index: 9999;
+}
+    #map {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+    }
+
+  .logo {
+    position: fixed;
+    bottom: 2vh;
+    left: 2vw;
+    z-index: 10;
+    max-width: 80vw;
+    max-height: 20vh;
+    opacity: 0.85;
+    cursor: pointer;
+  }
+
+
+    .distance-info {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 1000;
+    }
+
+    .transport-selector {
+        position: absolute;
+        bottom: 50px;
+        right: 20px;
+        background: white;
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 1000;
+    }
+    
+.idiomdiv {
+    display: flex; /* Las banderas se colocarán horizontalmente */
+    gap: 10px; /* Espacio entre las banderas, ajusta al gusto */
+    align-items: center; /* Alineación vertical de las banderas */
+    justify-content: center; /* Opcional, si deseas centrar las banderas horizontalmente dentro del div */
+    position: absolute;
+    top: 3%;
+    right: 20px;
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 1000;
+}
+    
+
+	
+.directions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 400px;
+    position: absolute;
+    top: 20px;
+    left: 70px;
+    background: rgba(73, 163, 13, 0.8); /* Verde con opacidad */
+    padding: 15px;
+    border-radius: 8px;
+    z-index: 1000;
+}
+
+/* Contenedor de cada input y su label */
+.input-container {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    width: 100%;
+}
+
+/* Estilo para los labels */
+.input-container label {
+    width: 60px; /* Ancho fijo para alinear los textos */
+    font-weight: bold;
+    color: white;
+}
+
+/* Estilo para los inputs */
+.input-container input {
+    flex-grow: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+}
+
+/* Estilo del botón de búsqueda (lupa) */
+.search-icon {
+    cursor: pointer;
+    font-size: 10px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    transition: background 0.3s ease;
+    margin-left: auto; /* Alinea a la derecha */
+}
+
+.mapa-floating-button img {
+  width: 60%;
+  height: auto;
+}
+
+/* Hover: Fondo blanco cuando pasas el ratón */
+.search-icon:hover {
+    background: green;
+}
+
+.bandera {
+    width: 40px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+
+    
+}
+
+.bandera.seleccionado {
+    opacity: 1;
+}
+
+ .solo-movil {
+   display: none;
+ }
+  
+  
+  .mapa-floating-button {
+   display: none;
+}
+
+
+
+/* Menú de opciones flotantes que sale hacia arriba */
+.mapa-opciones {
+   display: none;
+}
+
+
+
+/* Botones flotantes redondos */
+.mapa-opcion {
+   display: none;
+}
+
+
+
+@media (max-width: 768px) {
+  body {
+    margin: 0;
+    padding: 0;
+    font-size: 4vw;
+  }
+
+  #map {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 0;
+  }
+  
+  
+  .modal-transporte {
+    max-width: 90vw;
+    max-height: 85vh;
+    padding: 4vw;
+    font-size: 4vw;
+    border-radius: 4vw;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .modal-transporte h3 {
+    font-size: 5vw;
+    margin-bottom: 4vw;
+  }
+
+  .contenedor-transportes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 columnas en móvil */
+    gap: 4vw;
+    margin-top: 4vw;
+  }
+
+  .boton-transporte {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    text-align: center;
+  }
+
+  .boton-transporte img {
+    width: 16vw;
+    height: 16vw;
+    border-radius: 2vw;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .boton-transporte span {
+    margin-top: 2vw;
+    font-size: 3.5vw;
+  }
+
+  .comparar-transporte {
+    margin-top: 5vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    gap: 3vw;
+  }
+
+  .comparar-transporte img {
+    width: 14vw;
+    height: 14vw;
+    border-radius: 2vw;
+  }
+
+  .comparar-transporte span {
+    font-size: 4vw;
+  }
+
+  
+
+  .idiomdiv {
+    position: fixed;
+    top: 2vh;
+    right: 4vw;
+    display: flex;
+    z-index: 10;
+  }
+
+  .idiomdiv img {
+    width: 8vw;
+    height: auto;
+  }
+
+  .logo {
+    position: fixed;
+    bottom: 2vh;
+    right: 2vw;
+    z-index: 10;
+    max-width: 60vw;
+    max-height: 15vh;
+    opacity: 0.85;
+  }
+
+
+
+  .formulario label {
+    font-weight: bold;
+    margin-bottom: 1vh;
+  }
+
+  .formulario input {
+    width: 100%;
+    font-size: 4vw;
+    padding: 1vh;
+    margin-bottom: 2vh;
+  }
+
+  #botonBuscar {
+    width: 15vw;
+    height: 15vw;
+    margin-top: 2vh;
+  }
+
+  select {
+    width: 90%;
+    font-size: 4vw;
+    margin: 2vh 0;
+  }
+
+  .distance-info {
+    display: none;
+  }
+
+.solo-movil {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 2vh;
+  left: 15vw;
+  width: 15vw;
+  height: 15vw;
+  z-index: 12;
+  background:  rgba(73, 163, 13, 0.8);
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  padding: 0;
+}
+
+
+  .transport-selector {
+    display: none;
+  }
+
+  /* Botón flotante principal */
+ /* Botón mapa flotante */
+.mapa-floating-button {
+  position: fixed;
+  bottom: 4vh;
+  right: 4vw;
+  width: 20vw;
+  height: 20vw;
+  border-radius: 50%;
+  background-color: rgba(73, 163, 13, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  z-index: 100;
+}
+
+.mapa-floating-button img {
+  width: 60%;
+  height: auto;
+}
+
+/* Menú de opciones flotantes que sale hacia arriba */
+.mapa-opciones {
+  position: fixed;
+  bottom: 18vh;
+  right: 2vw;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 2vh;
+  z-index: 99;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.mapa-opciones.activo {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Botones flotantes redondos */
+.mapa-opcion {
+  width: 14vw;
+  height: 14vw;
+  border-radius: 50%;
+  background:  rgba(73, 163, 13, 0.8);
+  border: none;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mapa-opcion img {
+  width: 70%;
+  height: auto;
+}
+
+
+
+  #buscadorBox {
+    display: none;
+    width: 90vw;
+    position: fixed;
+    top: 10vh;
+    left: 5vw;
+	height: 80vw;
+    border-radius: 4vw;
+    padding: 4vw;
+    z-index: 1000;
+
+    font-size: 4vw;
+  }
+
+  .directions {
+    display: flex;
+    flex-direction: column;
+    gap: 4vw;
+    background: rgba(73, 163, 13, 0.85);
+    padding: 4vw;
+    border-radius: 3vw;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    top: 0px;
+    left: 0px;
+  }
+
+  .input-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1vw;
+    width: 100%;
+  }
+
+  .input-container label {
+    font-weight: bold;
+    font-size: 4vw;
+    margin-bottom: 1vw;
+  }
+
+  .input-container input {
+    width: 100%;
+    font-size: 4vw;
+    padding: 2.5vw;
+    border-radius: 1.5vw;
+    border: 1px solid #ccc;
+    outline: none;
+  }
+
+  .search-icon {
+    align-self: center;
+    width: 12vw;
+    height: 12vw;
+    cursor: pointer;
+    margin-top: 4vw;
+        transition: background 0.3s ease;
+  }
+
+.mapa-floating-button img {
+  width: 60%;
+  height: auto;
+}
+
+/* Hover: Fondo blanco cuando pasas el ratón */
+.search-icon:hover {
+    background: green;
+}
+
+
+#btnRepetirOrigenDestino{
+
+  display: flex;
+
+  position: fixed;
+  top: 10vh;
+  left: 40%;
+  width: 55vw;
+  height: 70px;
+  background: rgba(73, 163, 13, 1);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+   display: none;
+   z-index: 9999;
+}
+
+
+#btnMostrarModal{
+    position: fixed;
+ 	top: 2vh;
+ 	width: 100px;
+  	left: 15vh;  
+    background: rgba(73, 163, 13, 1);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: none;
+    z-index: 9999;
+
+}
+
+#comparisonModal {
+  width: 100% !important;
+  height: 100% !important;
+  padding: 3vw !important;
+  box-sizing: border-box;
+  border-radius: 4vw;
+  font-size: 3.5vw;
+  overflow: hidden;
+}
+
+#gridContainer {
+  width: 100% !important;
+  height: 100% !important;
+  overflow-x: auto;
+}
+
+  .slick-header-column {
+    font-size: 1.6vw !important;
+    padding: 0.5vh 1vw;
+    text-align: center;
+  }
+
+  .slick-row {
+    font-size: 2.2vw !important;
+    line-height: 1.4em;
+  }
+
+
+}
+
+
+
+
+	
+
+    
+</style>
+</head>
+<body>
+
+
+    <!-- Botón de abrir menú de mapas -->
+
+
+<!-- Opciones flotantes -->
+<div class="mapa-opciones" id="menuMapas">
+  <button class="mapa-opcion" data-layer="metro"><img src="img/metroVal.png" alt="Metro" /></button>
+  <button class="mapa-opcion" data-layer="bus"><img src="img/emt.png" alt="Bus EMT" /></button>
+  <button class="mapa-opcion" data-layer="rodalia"><img src="img/cerca.png" alt="Rodalia" /></button>
+  <button class="mapa-opcion" data-layer="bici"><img src="img/valenbisi.jpg" alt="Valenbisi" /></button>
+</div>
+
+
+    
+    
+  <div id="map"></div>
+  <div class="distance-info" id="distance-info">Seleccione dos puntos para calcular la distancia.</div>
+
+  <header>
+<a href="information.html" style="z-index: 999; position: fixed; bottom: 2vh; left: 2vw;">
+  <img src="img/logo1.png" alt="Logo" class="logo" style="pointer-events: auto;">
+</a>
+
+
+  </header>
+
+
+<button id="mostrarBuscadorBtn" class="solo-movil">
+  <img src="img/route.png" alt="Buscar" style="width: 70%; height: auto;" />
+</button>
+
+
+<button id="btnMostrarModal"> 
+    Mostrar de nuevo la tabla
+</button>
+
+
+<button id="btnRepetirOrigenDestino" > 
+    Repetir origen y destino
+</button>
+
+
+<div class="idiomdiv">
+  <img src="img/esp.png" alt="Español" class="bandera esp">
+  <img src="img/val.jpg" alt="Valenciano" class="bandera val">
+  <img src="img/en.png" alt="English" class="bandera en">
+</div>
+
+   <!-- Select nativo oculto (para accesibilidad) -->
+  <select id="transport-select" class="native-select">
+    <option value="none" selected>Mapa simple</option>
+    <option value="metro">Metro</option>
+    <option value="bus">Autobuses</option>
+    <option value="bici">Valenbisi</option>
+    <option value="rodalia">Rodalia</option>
+    <option value="taxi">Taxis</option>
+  </select>
+  
+  <!-- Selector personalizado -->
+  <div class="custom-select-container">
+    <!-- Las opciones ahora van antes del encabezado en el DOM para un mejor flujo -->
+    <div class="custom-select-options" id="select-options">
+      <div class="custom-select-option selected" data-value="none">
+        <i data-lucide="map" class="h-5 w-5 mr-2"></i>
+        <span>Mapa simple</span>
+      </div>
+      <div class="custom-select-option" data-value="metro">
+        <i data-lucide="train" class="h-5 w-5 mr-2 text-red-500"></i>
+        <span>Metro</span>
+      </div>
+      <div class="custom-select-option" data-value="bus">
+        <i data-lucide="bus" class="h-5 w-5 mr-2 text-green-500"></i>
+        <span>Autobuses</span>
+      </div>
+      <div class="custom-select-option" data-value="bici">
+        <i data-lucide="bike" class="h-5 w-5 mr-2 text-blue-500"></i>
+        <span>Valenbisi</span>
+      </div>
+      <div class="custom-select-option" data-value="rodalia">
+        <i data-lucide="train" class="h-5 w-5 mr-2 text-orange-500"></i>
+        <span>Rodalia</span>
+      </div>
+      <div class="custom-select-option" data-value="taxi">
+        <i data-lucide="car" class="h-5 w-5 mr-2 text-yellow-500"></i>
+        <span>Taxis</span>
+      </div>
+    </div>
+    
+    <div class="custom-select-header" id="select-header">
+      <div class="flex items-center">
+        <i data-lucide="map" class="h-5 w-5 mr-2"></i>
+        <span id="selected-option-text">Mapa simple</span>
+      </div>
+      <i data-lucide="chevron-up" class="h-4 w-4" id="select-icon"></i>
+    </div>
+  </div>
+  
+  
+
+  
+  
+  
+  
+  <div id="buscadorBox">
+  
+<div class="directions">
+    <div class="input-container">
+        <label id="origin" for="origin-input">Origen</label>
+        <input id="origin-input" type="text" placeholder="Elige un punto de origen">
+    </div>
+
+    <div class="input-container">
+        <label id="destination" for="destination-input">Destino</label>
+        <input id="destination-input" type="text" placeholder="Elige un punto de destino">
+    </div>
+
+    <img id="set-directions" class="search-icon" src="img/lupa.png"></img>
+</div>
+
+
+</div>
+  
+
+
+  <!-- Bloque de direcciones -->
+
+  <!-- Incluir iconos de Lucide -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCzX88lbn1Xa_pouaPX4k_4IjRuJsjB064&libraries=geometry,places"></script>
+<!-- SlickGrid CSS -->
+	   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slickgrid@5.14.0/dist/styles/css/slick-alpine-theme.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slickgrid@5.14.0/dist/styles/css/slick.columnpicker.css"> 
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/slickgrid@5.14.0/dist/browser/slick.core.min.js"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/slickgrid@5.14.0/dist/browser/slick.interactions.min.js"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/slickgrid@5.14.0/dist/browser/slick.grid.min.js"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/slickgrid@5.14.0/dist/browser/controls/slick.columnpicker.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/slickgrid@5.14.0/dist/browser/slick.dataview.min.js"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/slickgrid@5.14.0/dist/browser/controls/slick.pager.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.0/jspdf.umd.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.14/jspdf.plugin.autotable.min.js"></script>       
+        <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+
+
+<script>
+lucide.createIcons();
+
+document.addEventListener('DOMContentLoaded', function() {
+    const nativeSelect = document.getElementById('transport-select');
+    const selectHeader = document.getElementById('select-header');
+    const selectOptions = document.getElementById('select-options');
+    const selectedOptionText = document.getElementById('selected-option-text');
+    const selectIcon = document.getElementById('select-icon');
+    const options = document.querySelectorAll('.custom-select-option');
+    
+    // Función para abrir/cerrar el selector
+    function toggleSelect() {
+      const isOpen = selectOptions.style.display === 'block';
+      selectOptions.style.display = isOpen ? 'none' : 'block';
+      selectIcon.setAttribute('data-lucide', isOpen ? 'chevron-up' : 'chevron-down');
+      lucide.createIcons();
+    }
+    
+    // Abrir/cerrar al hacer clic en el encabezado
+    selectHeader.addEventListener('click', toggleSelect);
+    
+    // Cerrar al hacer clic fuera del selector
+    document.addEventListener('click', function(event) {
+      if (!event.target.closest('.custom-select-container')) {
+        selectOptions.style.display = 'none';
+        selectIcon.setAttribute('data-lucide', 'chevron-up');
+        lucide.createIcons();
+      }
+    });
+    
+    // Manejar la selección de opciones
+    options.forEach(option => {
+      option.addEventListener('click', function() {
+        const value = this.getAttribute('data-value');
+        const text = this.querySelector('span').textContent;
+        
+        // Actualizar el select nativo
+        nativeSelect.value = value;
+        
+        // Disparar evento change en el select nativo
+        const event = new Event('change', { bubbles: true });
+        nativeSelect.dispatchEvent(event);
+        
+        // Actualizar el texto seleccionado
+        selectedOptionText.textContent = text;
+        
+        // Actualizar la clase selected
+        options.forEach(opt => opt.classList.remove('selected'));
+        this.classList.add('selected');
+        
+        // Cerrar el selector
+        toggleSelect();
+        
+        // Aquí puedes añadir código para cambiar la vista del mapa
+        console.log('Seleccionado:', value);
+      });
+    });
+    
+    // Invertir el icono inicial ya que ahora se despliega hacia arriba
+    selectIcon.setAttribute('data-lucide', 'chevron-up');
+    lucide.createIcons();
+  });
+
+
+
+
+
+const modeTranslations = {
+  es: {
+    WALKING: "Andando",
+    BICYCLING: "Bicicleta",
+    PATINETE: "Patinete",
+    DRIVING: "Conduciendo",
+    METRO: "Metro",
+    BUS: "Autobús",
+    Valenbisi: "ValenBisi",
+    TRAIN: "Tren",
+    ELECTRIC_CAR: "Coche eléctrico",
+    DIESEL_CAR: "Coche diésel",
+    GASOLINE_CAR: "Coche de gasolina",
+    COMBUSTION_MOTORBIKE: "Moto",
+    ELECTRIC_MOTORBIKE: "Moto eléctrica",
+    CICLOMOTOR: "Ciclomotor",
+    COCHE_HIBRIDO: "Coche híbrido",
+    COCHE_DE_HIDROGENO: "Coche de hidrógeno",
+    CAMION: "Camión",
+    TAXI: "Taxi"
+  },
+  val: {
+    WALKING: "A peu",
+    BICYCLING: "Bicicleta",
+    PATINETE: "Patinet",
+    DRIVING: "Conduint",
+    METRO: "Metro",
+    BUS: "Autobús",
+    Valenbisi: "ValenBisi",
+    TRAIN: "Tren",
+    ELECTRIC_CAR: "Cotxe elèctric",
+    DIESEL_CAR: "Cotxe dièsel",
+    GASOLINE_CAR: "Cotxe de gasolina",
+    COMBUSTION_MOTORBIKE: "Moto",
+    ELECTRIC_MOTORBIKE: "Moto elèctrica",
+    CICLOMOTOR: "Ciclomotor",
+    COCHE_HIBRIDO: "Cotxe híbrid",
+    COCHE_DE_HIDROGENO: "Cotxe d'hidrogen",
+    CAMION: "Camió",
+    TAXI: "Taxi"
+  },
+  en: {
+    WALKING: "Walking",
+    BICYCLING: "Bicycle",
+    PATINETE: "Scooter",
+    DRIVING: "Driving",
+    METRO: "Subway",
+    BUS: "Bus",
+    Valenbisi: "ValenBisi",
+    TRAIN: "Train",
+    ELECTRIC_CAR: "Electric car",
+    DIESEL_CAR: "Diesel car",
+    GASOLINE_CAR: "Gasoline car",
+    COMBUSTION_MOTORBIKE: "Motorbike",
+    ELECTRIC_MOTORBIKE: "Electric motorbike",
+    CICLOMOTOR: "Moped",
+    COCHE_HIBRIDO: "Hybrid car",
+    COCHE_DE_HIDROGENO: "Hydrogen car",
+    CAMION: "Truck",
+    TAXI: "Taxi"
+  }
+};
+
+
+
+
+const textos = {
+  es: {
+    origen: "Origen",
+    destino: "Destino",
+    seleccionar_vista: "Seleccionar una vista del mapa",
+    mapa_simple: "Mapa simple",
+    metro: "Metro",
+    bus: "Autobuses",
+    valenbisi: "Valenbisi",
+    rodalia: "Rodalia",
+    comparar: "Comparar todos los transportes",
+    error_bici: "No se ha podido establecer una ruta en Valenbisi",
+	mostrar_tabla: "Mostrar de nuevo la tabla",
+	repetir: "Repetir origen y destino",
+	error_ruta_andando: "No se ha podido establecer una ruta andando",
+	  error_ruta_coche: "No se ha podido establecer una ruta en coche",
+	  error_ruta_valenbisi: "No se ha podido establecer una ruta en ValenBisi",
+	  error_ruta_taxi: "No se ha podido establecer una ruta en taxi",
+	  error_ruta_bici: "No se ha podido establecer una ruta en bicicleta",
+	  error_ruta_patinete: "No se ha podido establecer una ruta en patinete",
+	  error_ruta_metro: "No se ha podido establecer una ruta en metro",
+	  error_ruta_rodalias: "No se ha podido establecer una ruta en rodalies",
+	  error_ruta_autobus: "No se ha podido establecer una ruta en autobús",
+	  error_ruta_general: "Ha ocurrido un error al procesar la solicitud. Por favor, inténtelo más tarde.",
+
+	mensajes: {
+	  ruta_valenbisi_error: "No se ha podido establecer una ruta en Valenbisi",
+	  ruta_metro_error: "No se ha podido establecer una ruta en metro entre los puntos seleccionados. Seleccione otro transporte.",
+	  ruta_metro_alternativa: "No se ha podido establecer una ruta en metro entre los puntos seleccionados. Le mostramos otra ruta recomendada.",
+	  ruta_bus_error: "No se ha podido establecer una ruta en bus entre los puntos seleccionados. Seleccione otro transporte.",
+	  ruta_bus_alternativa: "No se ha podido establecer una ruta en bus entre los puntos seleccionados. Le mostramos otra ruta recomendada.",
+	  ruta_rodalia_error: "No se ha podido establecer una ruta en rodalia entre los puntos seleccionados. Seleccione otro transporte.",
+	  ruta_rodalia_alternativa: "No se ha podido establecer una ruta en rodalia entre los puntos seleccionados. Le mostramos otra ruta recomendada.",	  	  
+	  selecciona_transporte: "Seleccione un medio de transporte",
+	  selecciona_dos_puntos: "Seleccione un punto de origen y uno de destino.",
+	  selecciona_origen: "No se ha encontrado el punto de origen. Seleccione una opción de la lista desplegable a la hora de escribir un origen.",
+	  selecciona_destino: "No se ha encontrado el punto de destino. Seleccione una opción de la lista desplegable a la hora de escribir un destino.",
+	  fuera_limites_origen: "El origen está fuera de los límites de la aplicación. Por favor seleccione un origen dentro de los límites.", 
+	  fuera_limites_destino: "El destino está fuera de los límites de la aplicación. Por favor seleccione un destino dentro de los límites.",
+	  ruta_exitosa: "Ruta generada con éxito",
+	  seleccione_punto_a: "Seleccione un nuevo punto A.",
+	  seleccione_punto_b: "Seleccione un nuevo punto B.",
+	  origen_destino_establecidos: "Origen y destino establecidos.",
+	  seleccione_dos_puntos: "Seleccione dos puntos para calcular la distancia."
+	},
+	tabla: {
+	  modo: "Modo",
+	  distancia: "Distancia Total",
+	  tiempo: "Tiempo Total",
+	  co2: "Emisiones CO2 por persona (g)",
+	  detalle: "Detalle del transporte",
+	  ver_ruta: "Ver Ruta"
+	},
+	modal_detalle: {
+	  distancia_total: "Distancia total",
+	  tiempo_total: "Tiempo total",
+	  co2_total: "Emisiones de CO₂",
+	  detalle_tramos: "Detalle del recorrido",
+	  detalle_tramos2: "Desglosando por transportes:"
+	}
+
+
+
+
+  },
+  val: {
+    origen: "Origen",
+    destino: "Destí",
+    seleccionar_vista: "Selecciona una vista del mapa",
+    mapa_simple: "Mapa simple",
+    metro: "Metro",
+    bus: "Autobusos",
+    valenbisi: "Valenbisi",
+    rodalia: "Rodalia",
+    comparar: "Comparar tots els transports",
+    error_bici: "No s'ha pogut establir una ruta en Valenbisi",
+	mostrar_tabla: "Mostrar la taula una altra vegada",
+	repetir: "Repetir origen i destí",
+	error_ruta_andando: "No s'ha pogut establir una ruta a peu",
+	error_ruta_coche: "No s'ha pogut establir una ruta en cotxe",
+	error_ruta_valenbisi: "No s'ha pogut establir una ruta amb ValenBisi",
+	error_ruta_taxi: "No s'ha pogut establir una ruta en taxi",
+	error_ruta_bici: "No s'ha pogut establir una ruta amb bicicleta",
+	error_ruta_patinete: "No s'ha pogut establir una ruta amb patinet",
+	error_ruta_metro: "No s'ha pogut establir una ruta amb metro",
+	error_ruta_rodalias: "No s'ha pogut establir una ruta amb rodalies",
+	error_ruta_autobus: "No s'ha pogut establir una ruta amb autobús",
+	error_ruta_general: "S'ha produït un error en processar la sol·licitud. Torna-ho a intentar més tard.",
+
+
+	mensajes: {
+	  ruta_valenbisi_error: "No s'ha pogut establir una ruta en Valenbisi",
+	  ruta_metro_error: "No s'ha pogut establir una ruta en metro entre els punts seleccionats. Selecciona un altre transport.",
+	  ruta_metro_alternativa: "No s'ha pogut establir una ruta en metro entre els punts seleccionats.  Et mostrem una ruta alternativa recomanada.",
+	  ruta_bus_error: "No s'ha pogut establir una ruta en bus entre els punts seleccionats. Selecciona un altre transport.",
+	  ruta_bus_alternativa: "No s'ha pogut establir una ruta en bus entre els punts seleccionats.Et mostrem una ruta alternativa recomanada.",
+	  ruta_rodalia_error: "No s'ha pogut establir una ruta en rodalies entre els punts seleccionats. Selecciona un altre transport.",
+	  ruta_rodalia_alternativa: "No s'ha pogut establir una ruta en rodalies entre els punts seleccionats. Et mostrem una ruta alternativa recomanada.",
+	  selecciona_transporte: "Selecciona un mitjà de transport",
+	  selecciona_dos_puntos: "Selecciona un punt d'origen i un de destí.",
+	  selecciona_destino:  "No s'ha trobat el punt de destí. Seleccione una opció de la llista desplegable a l'hora d'escriure un destí.",
+	  selecciona_origen: "No s'ha trobat el punt d'origen. Seleccione una opció de la llista desplegable a l'hora d'escriure un origen." ,
+	  fuera_limites_origen: "L'origen està fora dels límits de l'aplicació. Per favor seleccione un origen dins dels límits.",
+	  fuera_limites_destino: "El destí està fora dels límits de l'aplicació. Per favor seleccione un destí dins dels límits.",
+	  ruta_exitosa: "Ruta generada amb èxit",
+	  seleccione_punto_a: "Selecciona un nou punt A.",
+	  seleccione_punto_b: "Selecciona un nou punt B.",
+	  origen_destino_establecidos: "Origen i destí establerts.",
+	  seleccione_dos_puntos: "Selecciona dos punts per calcular la distància."
+	},
+	tabla: {
+	  modo: "Mode",
+	  distancia: "Distància Total",
+	  tiempo: "Temps Total",
+	  co2: "Emissions de CO2 per persona (g)",
+	  detalle: "Detall del transport",
+	  ver_ruta: "Veure Ruta"
+	},
+	modal_detalle: {
+	  distancia_total: "Distància total",
+	  tiempo_total: "Temps total",
+	  co2_total: "Emissions de CO₂",
+	  detalle_tramos: "Detall del recorregut",
+	 detalle_tramos2: "Desglossant per transports:"
+	}
+
+
+
+
+
+
+  },
+  en: {
+    origen: "Origin",
+    destino: "Destination",
+    seleccionar_vista: "Select a map view",
+    mapa_simple: "Simple map",
+    metro: "Subway",
+    bus: "Bus",
+    valenbisi: "Bike stations",
+    rodalia: "Train",
+    comparar: "Compare all transports",
+    error_bici: "Could not establish a Valenbisi route",
+	mostrar_tabla: "Show the table again",
+	repetir: "Repeat origin and destination",
+	error_ruta_andando: "A walking route could not be established",
+	error_ruta_coche: "A driving route could not be established",
+	error_ruta_valenbisi: "A ValenBisi route could not be established",
+	error_ruta_taxi: "A taxi route could not be established",
+	error_ruta_bici: "A bicycle route could not be established",
+	error_ruta_patinete: "An e-scooter route could not be established",
+	error_ruta_metro: "A metro route could not be established",
+	error_ruta_rodalias: "A commuter train route could not be established",
+	error_ruta_autobus: "A bus route could not be established",
+	error_ruta_general: "An error occurred while processing the request. Please try again later.",
+
+
+	mensajes: {
+	  ruta_valenbisi_error: "Could not establish a Valenbisi route",
+	  ruta_metro_error: "Could not establish a metro route between selected points. Please choose another transport.",
+	  ruta_metro_alternativa: "Could not establish a metro route between selected points. Showing you an alternative recommended route.",
+	  ruta_bus_error: "Could not establish a bus route between selected points. Please choose another transport.",
+	  ruta_bus_alternativa: "Could not establish a bus route between selected points. Showing you an alternative recommended route.",
+	  ruta_rodalia_error: "Could not establish a train route between selected points. Please choose another transport.",
+	  ruta_rodalia_alternativa: "Could not establish a train route between selected points. Showing you an alternative recommended route.",
+	  selecciona_transporte: "Please select a mode of transport",
+	  selecciona_dos_puntos: "Please select an origin and destination.",
+	  selecciona_origen: "The origin point was not found. Select an option from the drop-down list when writing an origin." ,
+	  selecciona_destino: "The destination point was not found. Select an option from the drop-down list when entering a destination." ,
+	  fuera_limites_origen: "The origin is out of bounds for the application. Please select an origin within the limits.",
+	  fuera_limites_destino: "The destination is out of bounds for the application. Please select a destination within the limits",
+	  ruta_exitosa: "Route generated successfully",
+		seleccione_punto_a: "Select a new point A.",
+		seleccione_punto_b: "Select a new point B.",
+		origen_destino_establecidos: "Origin and destination set.",
+		seleccione_dos_puntos: "Select two points to calculate the distance."
+	},
+	tabla: {
+	  modo: "Mode",
+	  distancia: "Total Distance",
+	  tiempo: "Total Time",
+	  co2: "CO2 Emissions per passenger (g)",
+	  detalle: "Transport Details",
+	  ver_ruta: "Show Route"
+	},
+	modal_detalle: {
+	  distancia_total: "Total Distance",
+	  tiempo_total: "Total Time",
+	  co2_total: "CO₂ Emissions",
+	  detalle_tramos: "Route Details",
+      detalle_tramos2: "Breaking down by transport:"
+	}
+
+
+
+  }
+};
+
+// Idioma actual cargado desde localStorage
+let idiomaActual = localStorage.getItem("idioma") || "es";
+
+
+
+
+document.getElementById("origin").innerText = t("origen");
+document.getElementById("destination").innerText = t("destino");
+
+
+
+function t(clave) {
+  return textos[idiomaActual][clave] || clave;
+}
+
+function tm(clave) {
+  return textos[idiomaActual].mensajes[clave] || clave;
+}
+
+function tt(clave) {
+  return textos[idiomaActual].tabla[clave] || clave;
+}
+
+function td(clave) {
+  return textos[idiomaActual].modal_detalle[clave] || clave;
+}
+
+document.getElementById("distance-info").innerText = tm("seleccione_dos_puntos");
+
+
+let map = L.map('map', {
+    minZoom: 10,
+    maxBounds: [[39.059009, -1.437558], [39.937940, 0.747262]]
+}).setView([39.4699, -0.3763], 13);
+
+// Capa base de Tracestack Topo
+L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+   
+}).addTo(map);
+
+    let pointA = null;
+    let pointB = null;
+    let markerA = null;
+    let markerB = null;
+    let routePolyline = [];
+    let markers = []; // Guarda todos los marcadores
+    let valenbisiStations = []; // Almacenar estaciones de Valenbisi
+    let transportMode = "TRANSIT";
+
+    var directionsService = new google.maps.DirectionsService();
+    var service = new google.maps.DistanceMatrixService();
+
+    // Función para crear un marcador en Leaflet
+    function createMarker(latlng, color) {
+      return L.marker(latlng, {
+        icon: L.icon({
+          iconUrl: `https://maps.google.com/mapfiles/ms/icons/${color}-dot.png`,
+          iconSize: [32, 32],
+          iconAnchor: [16, 32]
+        })
+      }).addTo(map);
+    }
+    
+    const btnRepetirOrigenDestino = document.getElementById("btnRepetirOrigenDestino");
+    
+    map.on('click', function (e) {
+        if (!pointA) {
+            pointA = e.latlng;
+            markerA = createMarker(pointA, "red");
+            document.getElementById('distance-info').innerText = tm("seleccione_punto_b");
+            
+            
+
+        } else if (!pointB) {
+            pointB = e.latlng;
+            markerB = createMarker(pointB, "blue");
+            seleccionaOpcionTransporte();
+            document.getElementById("distance-info").innerText = tm("origen_destino_establecidos");
+           
+        } else {
+         
+            map.removeLayer(markerA);
+            map.removeLayer(markerB);
+            pointB = null;
+            pointA = null;
+        	document.getElementById("transport-select").value = "none";
+        	document.getElementById("btnMostrarModal").style.display = "none";
+        	document.getElementById("btnRepetirOrigenDestino").style.display = "none";
+      	  	toggleTransport("none");
+      	  	sincronizarSelectorPersonalizado("none");
+           distancia_total = 0;
+           segundos_total = 0;
+           
+           
+           const modal = document.getElementById("googleMapsModal");
+           if (modal) modal.remove();
+
+           
+            if (routePolyline) {
+            	  routePolyline.forEach(item => {
+            	    map.removeLayer(item);
+            	  });
+                  routePolyline = [];
+            	}
+
+            document.getElementById('distance-info').innerText = tm("seleccione_punto_a");
+        }
+    });
+
+    btnRepetirOrigenDestino.addEventListener("click", () => {
+    	document.getElementById("transport-select").value = "none";
+    	document.getElementById("btnMostrarModal").style.display = "none";
+        const modal = document.getElementById("googleMapsModal");
+        if (modal) modal.remove();
+    	seleccionaOpcionTransporte();
+	});
+
+    
+    map.on('zoomend', function () {
+        let zoom = map.getZoom();
+        let size = zoom < 10 ? 7    
+                 : zoom < 13 ? 10
+                 : zoom < 14 ? 13
+                 : zoom < 15 ? 19
+                 : 25;  
+
+        markers.forEach(marker => {
+            let color = marker.tipo === "metro" ? "red" :
+                        marker.tipo === "bus" ? "green" :
+                        marker.tipo === "bici" ? "blue" :
+            			marker.tipo === "rodalia" ? "orange" :"yellow";
+
+            let letter = marker.tipo === "metro" ? "M" :
+                	marker.tipo === "bus" ? "B" :
+                    marker.tipo === "bici" ? "V" :
+           			marker.tipo === "rodalia" ? "R" :"T";
+
+            marker.setIcon(createCustomIcon(size, letter, color));
+        });
+    });
+    
+    function seleccionaOpcionTransporte() {
+        // Crear el modal
+        let modal = document.createElement("div");
+        modal.style.position = "fixed";
+        modal.style.top = "0";
+        modal.style.left = "0";
+        modal.style.width = "100%";
+        modal.style.height = "100%";
+        modal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+        modal.style.display = "flex";
+        modal.style.justifyContent = "center";
+        modal.style.alignItems = "center";
+        modal.style.zIndex = "9999";
+        modal.style.animation = "fadeIn 0.3s ease-in-out";
+
+        let modalContent = document.createElement("div");
+        modalContent.style.background = "#fff";
+        modalContent.style.padding = "20px";
+        modalContent.style.borderRadius = "10px";
+        modalContent.style.textAlign = "center";
+        modalContent.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
+        modalContent.style.animation = "scaleIn 0.3s ease-in-out";
+
+        if (window.innerWidth <= 768) {
+        	  modalContent.style.maxWidth = "95vw";
+        	  modalContent.style.maxHeight = "90vh";
+        	  modalContent.style.overflowY = "auto";
+        	  modalContent.style.boxSizing = "border-box";
+        	  modalContent.style.borderRadius = "2vw";
+        	  modalContent.style.padding = "2vw";
+        	  modalContent.style.fontSize = "4vw";
+        	  modalContent.style.width = "fit-content";
+        	} 
+        let title = document.createElement("h3");
+        title.innerText = tm("selecciona_transporte");
+
+        modalContent.appendChild(title);
+
+        let contenedorTransportes = document.createElement("div");
+        contenedorTransportes.style.display = "grid";
+        contenedorTransportes.style.gridTemplateColumns = "repeat(5, 3fr)";
+        contenedorTransportes.style.gap = "15px";
+        contenedorTransportes.style.marginTop = "15px";
+
+        let botones = [
+        	  { clave: "WALKING", valor: "WALKING", img: "img/andando.png" },
+        	  { clave: "BICYCLING", valor: "BICYCLING", img: "img/bicicleta.png" },
+        	  { clave: "PATINETE", valor: "PATINETE", img: "img/patinete.png" },
+        	  { clave: "DIESEL_CAR", valor: "DIESEL_CAR", img: "img/carro.png" },
+        	  { clave: "GASOLINE_CAR", valor: "GASOLINE_CAR", img: "img/vehiculo.png" },
+        	  { clave: "ELECTRIC_CAR", valor: "ELECTRIC_CAR", img: "img/enchufe.png" },
+        	  { clave: "COCHE_HIBRIDO", valor: "COCHE_HIBRIDO", img: "img/ecologico.png" },
+        	  { clave: "COCHE_DE_HIDROGENO", valor: "COCHE_DE_HIDROGENO", img: "img/hidrogeno.png" },
+        	  { clave: "CAMION", valor: "CAMION", img: "img/camion.png" },
+        	  { clave: "COMBUSTION_MOTORBIKE", valor: "COMBUSTION_MOTORBIKE", img: "img/motocicleta.png" },
+        	  { clave: "CICLOMOTOR", valor: "CICLOMOTOR", img: "img/ciclomotor.png" },
+        	  { clave: "ELECTRIC_MOTORBIKE", valor: "ELECTRIC_MOTORBIKE", img: "img/electrica.png" },
+        	  { clave: "METRO", valor: "METRO", img: "img/subterraneo.png" },
+        	  { clave: "BUS", valor: "BUS", img: "img/bus.png" },
+        	  { clave: "Valenbisi", valor: "Valenbisi", img: "img/valenbisi.jpg" },
+        	  { clave: "TRAIN", valor: "TRAIN", img: "img/rodalies.png" },
+        	  { clave: "TAXI", valor: "TAXI", img: "img/taxi.png" }
+        	];
+
+        
+        
+        
+
+
+        
+        botones.forEach(boton => {
+            let btn = document.createElement("div");
+            btn.style.display = "flex";
+            btn.style.flexDirection = "column";
+            btn.style.alignItems = "center";
+            btn.style.cursor = "pointer";
+            btn.style.transition = "transform 0.2s ease";
+            
+            btn.classList.add("boton-transporte");
+            
+            let img = document.createElement("img");
+            img.src = boton.img;
+            img.style.width = "60px";
+            img.style.height = "60px";
+            img.style.borderRadius = "10px";
+            img.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.2)";
+            
+            let texto = document.createElement("span");
+            texto.innerText = modeTranslations[idiomaActual][boton.clave] || modeMap[boton.valor] || boton.valor;
+            texto.style.marginTop = "5px";
+
+            btn.appendChild(img);
+            btn.appendChild(texto);
+            
+            btn.onmouseover = () => btn.style.transform = "scale(1.1)";
+            btn.onmouseleave = () => btn.style.transform = "scale(1)";
+            btn.onclick = function() {
+            	
+            	btnRepetirOrigenDestino.style.display = "block";
+                transportMode = boton.valor;
+                document.body.removeChild(modal);
+                calculateDistanceAndRoute();
+            };
+            
+            contenedorTransportes.appendChild(btn);
+        });
+        
+        modalContent.appendChild(contenedorTransportes);
+        
+        let comparacion = document.createElement("div");
+        comparacion.style.marginTop = "20px";
+        comparacion.style.cursor = "pointer";
+        comparacion.style.display = "flex";
+        comparacion.style.alignItems = "center";
+        comparacion.style.justifyContent = "center";
+        comparacion.style.transition = "transform 0.2s ease";
+        
+        
+        modalContent.classList.add("modal-transporte");
+        contenedorTransportes.classList.add("contenedor-transportes");
+        
+        comparacion.classList.add("comparar-transporte");
+        
+        let imgComparar = document.createElement("img");
+        imgComparar.src = "img/compara.png";
+        imgComparar.style.width = "60px";
+        imgComparar.style.height = "60px";
+        imgComparar.style.borderRadius = "10px";
+        imgComparar.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.2)";
+        
+        let textoComparar = document.createElement("span");
+        textoComparar.innerText = t("comparar");
+        textoComparar.style.marginLeft = "10px";
+        
+        comparacion.appendChild(imgComparar);
+        comparacion.appendChild(textoComparar);
+        
+        comparacion.onmouseover = () => comparacion.style.transform = "scale(1.1)";
+        comparacion.onmouseleave = () => comparacion.style.transform = "scale(1)";
+        comparacion.onclick = function() {
+        	document.getElementById("btnRepetirOrigenDestino").style.display = "none";
+      	  	toggleTransport("none");
+      	  sincronizarSelectorPersonalizado("none");
+
+            transportMode = "COMPARA";
+            document.body.removeChild(modal);
+            calculateDistanceAndRoute();
+        };
+        
+        modalContent.appendChild(comparacion);
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+    }
+    
+    document.getElementById("mostrarBuscadorBtn").addEventListener("click", () => {
+        // Cierra modales abiertos si existen
+        const modales = [
+            document.querySelector("#comparisonModal"),
+            document.querySelector(".modal-transporte"),
+            document.getElementById("googleMapsModal")
+        ];
+
+        modales.forEach(modal => {
+            if (modal) modal.remove();
+        });
+
+        const buscador = document.getElementById("buscadorBox");
+        const btnRepetir = document.getElementById("btnRepetirOrigenDestino");
+
+        if (buscador) {
+            const isVisible = buscador.style.display === "flex";
+
+            if (isVisible) {
+                buscador.style.display = "none";
+            } else {
+                buscador.style.display = "flex";
+                const origininput = document.getElementById("origin-input");
+                if (origininput) origininput.focus();
+            }
+
+            if (btnRepetir) btnRepetir.style.display = "none";
+        }
+    });
+
+
+
+
+    // Agregar animaciones al CSS
+    document.head.insertAdjacentHTML("beforeend", `
+        <style>
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes scaleIn {
+                from { transform: scale(0.8); }
+                to { transform: scale(1); }
+            }
+        </style>
+    `);
+    
+    
+
+
+
+    
+    </script>
+    <script src="JSProyecto.js"></script>
+    
+    
+
+</body>
+</html>

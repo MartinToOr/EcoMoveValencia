@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Información</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: #f2f2f2;
+      color: #333;
+      padding: 20px;
+    }
+    .logo {
+      position: fixed;
+      bottom: 2vh;
+      left: 2vw;
+      z-index: 10;
+      max-width: 80vw;
+      max-height: 20vh;
+      opacity: 0.85;
+      cursor: pointer;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      color: #4a7c12;
+    }
+    @media (max-width: 768px) {
+      body {
+        font-size: 4vw;
+        padding: 4vw;
+      }
+      .container {
+        padding: 4vw;
+        border-radius: 4vw;
+      }
+    }
+    .idiomdiv {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      top: 3%;
+      right: 20px;
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      z-index: 1000;
+    }
+    .bandera {
+      width: 40px;
+      cursor: pointer;
+      opacity: 0.5;
+      transition: opacity 0.3s;
+    }
+    .bandera.seleccionado {
+      opacity: 1;
+    }
+    
+	.back-btn {
+	  display: block;
+	  width: fit-content;
+	  margin: 30px 0 0 auto; /* arriba, derecha, abajo, izquierda */
+	  padding: 10px 20px;
+	  background: #4a7c12;
+	  color: white;
+	  text-decoration: none;
+	  border-radius: 5px;
+	}
+	
+	
+
+    @media (max-width: 768px) {
+	.back-btn {
+	  display: block;
+	  width: fit-content;
+	  margin: 30px 0 0 auto; /* arriba, derecha, abajo, izquierda */
+	  padding: 10px 20px;
+	  background: #4a7c12;
+	  color: white;
+	  text-decoration: none;
+	  border-radius: 5px;
+	}
+      .container {
+        padding: 5vw;
+        border-radius: 4vw;
+        margin-top: 10vh;
+      }
+    }
+    /* Table styles */
+    table.emissions-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    table.emissions-table th, table.emissions-table td {
+      padding: 8px;
+    }
+    table.emissions-table th {
+      background: #4a7c12;
+      color: #fff;
+      text-align: left;
+    }
+    table.emissions-table td:last-child {
+      text-align: right;
+    }
+    table.emissions-table tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+.chart-container {
+  margin: 30px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centra todo el contenido horizontalmente */
+}
+
+.bar-line {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Centra horizontalmente */
+  margin: 8px 0;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.bar-label {
+  width: 180px;
+  text-align: right;
+  margin-right: 10px;
+  font-size: 0.95rem;
+}
+
+.bar-track {
+  background: #ddd;
+  height: 12px;
+  border-radius: 5px;
+  position: relative;
+  margin-right: 10px;
+  width: 600px; /* Anchura fija de barra en escritorio */
+  max-width: 80%;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 5px 0 0 5px;
+}
+
+.bar-value {
+  min-width: 70px;
+  text-align: left;
+  font-weight: bold;
+}
+
+/* Adaptación móvil */
+@media (max-width: 768px) {
+  .bar-line {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .bar-label {
+    text-align: center;
+    margin: 4px 0;
+    width: 100%;
+  }
+
+  .bar-track {
+    width: 100%;
+    max-width: 90vw;
+    margin: 4px 0;
+  }
+
+  .bar-value {
+    margin-top: 4px;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <!-- Selector de idioma -->
+  <div class="idiomdiv">
+    <img src="img/esp.png" class="bandera esp" onclick="cambiarIdioma('es')">
+    <img src="img/val.jpg" class="bandera val" onclick="cambiarIdioma('val')">
+    <img src="img/en.png" class="bandera en" onclick="cambiarIdioma('en')">
+  </div>
+  <!-- Logo -->
+  <img src="img/logo1.png" alt="Logo" class="logo">
+  <div class="container">
+    <h1 id="titulo"></h1>
+    <h2 id="contexto-titulo"></h2>
+    <p id="contexto-texto1"></p>
+    <p id="contexto-texto2"></p>
+    <p id="contexto-texto3"></p>
+    <p id="contexto-texto4"></p>
+    <h2 id="objetivos-titulo"></h2>
+    <ul id="objetivos-lista"></ul>
+    <h2 id="emisiones-titulo"></h2>
+        <div id="emisiones-intro"></div>
+    <p id="emisiones-descripcion"></p>
+    <table id="emisiones-tabla" class="emissions-table">
+      <thead>
+        <tr>
+          <th id="tabla-transporte"></th>
+          <th id="tabla-emisiones"></th>
+        </tr>
+      </thead>
+      <tbody id="emisiones-tbody"></tbody>
+    </table>
+    <div id="chart-container" class="chart-container"></div>
+    <h2 id="autor-titulo"></h2>
+    <p>Martín Toscano Orts</p>
+    <h2 id="tutor-titulo"></h2>
+    <p>Enrique Hernández Orallo</p>
+    <h2 id="tecnologias-titulo"></h2>
+    <ul id="tecnologias-lista"></ul>
+    <h2 id="legal-titulo"></h2>
+    <p id="legal-texto"></p>
+    <a href="mapa.html" class="back-btn" id="volver-boton"></a>
+  </div>
+  <script>
+    // Set initial language from localStorage or default to Spanish
+    let idiomaActual = localStorage.getItem('idioma') || 'es';
+    const traducciones = {
+      es: {
+        titulo: "Información sobre la plataforma",
+        "contexto-titulo": "Transporte y cambio climático",
+        "contexto-texto1": "En las últimas décadas, el cambio climático se ha convertido en uno de los mayores desafíos a nivel global, con impactos directos sobre los ecosistemas, la salud humana y la estabilidad de las ciudades. Entre las principales causas del calentamiento global se encuentra el transporte, responsable de una parte considerable de las emisiones de gases de efecto invernadero, en especial el dióxido de carbono (CO₂). El modelo actual, centrado en el uso intensivo del vehículo privado con motor térmico, genera no solo una elevada huella de carbono, sino también problemas graves de contaminación atmosférica y acústica. ",
+        "contexto-texto2": "Este patrón de movilidad también contribuye a la congestión urbana, al deterioro del espacio público y a la exclusión social de quienes no disponen de medios privados. Frente a esta realidad, se hace urgente promover formas de transporte más sostenibles, eficientes y equitativas, como el transporte público, la bicicleta o los desplazamientos a pie.",
+        "contexto-texto3": "En este contexto global, la ciudad de Valencia no es una excepción. Aunque en los últimos años ha apostado por mejorar su red ciclista, peatonal y de transporte público, la dependencia del automóvil sigue siendo elevada en muchas zonas del área metropolitana. Según datos locales, el tráfico rodado representa uno de los principales focos de contaminación en la ciudad, especialmente en los distritos más densamente poblados y en los accesos desde municipios cercanos.",
+        "contexto-texto4": "Además, las características urbanas de Valencia —una ciudad compacta, con clima suave y orografía favorable— la convierten en un escenario ideal para fomentar la movilidad sostenible. Sin embargo, para que esta transición sea efectiva, es esencial que la ciudadanía disponga de herramientas que le permitan comprender el impacto ambiental de sus decisiones cotidianas. Esta plataforma nace precisamente con ese propósito: informar, sensibilizar y facilitar una comparación clara entre las distintas opciones de transporte desde una perspectiva ambiental.",
+        "objetivos-titulo": "Objetivos de la plataforma",
+        "objetivos-lista": [
+          "Concienciar a la ciudadanía sobre el impacto ambiental del transporte urbano y promover hábitos de movilidad más sostenibles.",
+          "Proporcionar una herramienta educativa que permita visualizar y comparar las emisiones de CO₂ (además del tiempo y la distancia) de diferentes medios de transporte en la ciudad de Valencia.",
+          "Contribuir a la reducción de emisiones de CO₂ animando a los usuarios a optar por alternativas de transporte más sostenibles."
+        ],
+        "emisiones-titulo": "Comparativa de emisiones de CO₂",
+        "emisiones-descripcion": "La siguiente tabla y gráfico muestran las emisiones de CO₂ por persona y por kilómetro para distintos medios de transporte.",
+        "tabla-transporte": "Medio de transporte",
+        "tabla-emisiones": "Emisiones de CO₂ (g/km por persona)",
+        "transportes-lista": [
+          "Coche (gasolina)",
+          "Coche (diésel)",
+          "Coche (híbrido)",
+          "Coche (hidrógeno)",
+          "Coche (eléctrico)",
+          "Taxi",
+          "Moto (gasolina)",
+          "Moto (eléctrica)",
+          "Autobús",
+          "Tren",
+          "Metro",
+          "Patinete (eléctrico)",
+          "Bicicleta",
+          "Caminando"
+        ],
+        "autor-titulo": "Autor",
+        "tutor-titulo": "Tutor",
+        "tecnologias-titulo": "Tecnologías utilizadas",
+        "tecnologias-lista": [
+          "Google Maps Directions API",
+          "Open Data Valencia",
+          "Leaflet + OpenStreetMap",
+          "Node.js y Express",
+          "HTML, CSS y JavaScript"
+        ],
+        "legal-titulo": "Información legal",
+        "legal-texto": "Desarrollado con fines académicos. No se recopilan datos personales.",
+        "volver-boton": "Volver al mapa"
+      },
+      val: {
+        titulo: "Informació sobre la plataforma",
+        "contexto-titulo": "Transport i canvi climàtic",
+        "contexto-texto1": "En les últimes dècades, el canvi climàtic s’ha convertit en un dels majors desafiaments a escala global, amb impactes directes sobre els ecosistemes, la salut humana i l’estabilitat de les ciutats. Entre les principals causes de l’escalfament global es troba el transport, responsable d’una part considerable de les emissions de gasos d’efecte hivernacle, especialment el diòxid de carboni (CO₂). El model actual, centrat en l’ús intensiu del vehicle privat amb motor tèrmic, genera no sols una elevada petjada de carboni, sinó també greus problemes de contaminació atmosfèrica i acústica.",
+        "contexto-texto2": "Este patró de mobilitat també contribueix a la congestió urbana, al deteriorament de l’espai públic i a l’exclusió social de qui no disposa de mitjans privats. Davant esta realitat, és urgent promoure formes de transport més sostenibles, eficients i equitatives, com el transport públic, la bicicleta o els desplaçaments a peu.",
+        "contexto-texto3": "En este context global, la ciutat de València no és una excepció. Encara que en els últims anys ha apostat per millorar la seua xarxa ciclista, per als vianants i de transport públic, la dependència del vehicle privat continua sent elevada en moltes zones de l’àrea metropolitana. Segons dades locals, el trànsit rodat representa un dels principals focus de contaminació a la ciutat, especialment als districtes més densament poblats i als accessos des de municipis pròxims.",
+        "contexto-texto4": "A més, les característiques urbanes de València —una ciutat compacta, amb un clima suau i una orografia favorable— la converteixen en un escenari ideal per a fomentar la mobilitat sostenible. No obstant això, perquè esta transició siga efectiva, és essencial que la ciutadania dispose d’eines que li permeten comprendre l’impacte ambiental de les seues decisions quotidianes. Esta plataforma naix precisament amb eixe propòsit: informar, sensibilitzar i facilitar una comparació clara entre les diferents opcions de transport des d’una perspectiva ambiental.",
+		 "objetivos-titulo": "Objectius de la plataforma",
+        "objetivos-lista": [
+          "Conscienciar la ciutadania sobre l’impacte ambiental del transport urbà i promoure hàbits de mobilitat més sostenibles.",
+          "Proporcionar una eina educativa que permeta visualitzar i comparar les emissions de CO₂ (a més del temps i la distància) dels diferents mitjans de transport a la ciutat de València.",
+          "Contribuir a la reducció d’emissions de CO₂ animant els usuaris a optar per alternatives de transport més sostenibles."
+        ],
+        "emisiones-titulo": "Comparativa d'emissions de CO₂",
+        "emisiones-descripcion": "La següent taula i gràfic mostren les emissions de CO₂ per persona i per quilòmetre per a diferents mitjans de transport.",
+        "tabla-transporte": "Mitjà de transport",
+        "tabla-emisiones": "Emissions de CO₂ (g/km per persona)",
+        "transportes-lista": [
+          "Cotxe (gasolina)",
+          "Cotxe (dièsel)",
+          "Cotxe (híbrid)",
+          "Cotxe (d’hidrogen)",
+          "Cotxe (elèctric)",
+          "Taxi",
+          "Moto (gasolina)",
+          "Moto (elèctrica)",
+          "Autobús",
+          "Tren",
+          "Metro",
+          "Patinet (elèctric)",
+          "Bicicleta",
+          "A peu"
+        ],
+        "autor-titulo": "Autor",
+        "tutor-titulo": "Tutor",
+        "tecnologias-titulo": "Tecnologies utilitzades",
+        "tecnologias-lista": [
+          "Google Maps Directions API",
+          "Open Data València",
+          "Leaflet + OpenStreetMap",
+          "Node.js i Express",
+          "HTML, CSS i JavaScript"
+        ],
+        "legal-titulo": "Informació legal",
+        "legal-texto": "Desenvolupat amb finalitats acadèmiques. No es recullen dades personals.",
+        "volver-boton": "Tornar al mapa"
+      },
+      en: {
+        titulo: "Platform Information",
+        "contexto-titulo": "Transportation and Climate Change",
+        "contexto-texto1": "In recent decades, climate change has become one of the greatest global challenges, with direct impacts on ecosystems, human health, and urban stability. Among the main causes of global warming is transportation, which is responsible for a significant share of greenhouse gas emissions, particularly carbon dioxide (CO₂). The current model, based on intensive use of private vehicles with combustion engines, generates not only a high carbon footprint but also serious air and noise pollution problems.",
+        "contexto-texto2": "This mobility pattern also contributes to urban congestion, the deterioration of public space, and social exclusion of those without access to private transport. Faced with this reality, it is urgent to promote more sustainable, efficient, and equitable forms of transportation, such as public transport, cycling, or walking.",
+        "contexto-texto3": "In this global context, the city of Valencia is no exception. Although in recent years it has invested in improving its cycling, pedestrian and public transport networks, private car use remains high in many parts of the metropolitan area. According to local data, road traffic is one of the main sources of pollution in the city, especially in densely populated districts and in the access routes from nearby towns.",
+        "contexto-texto4": "Furthermore, Valencia’s urban characteristics—a compact city with a mild climate and favorable terrain—make it an ideal setting for promoting sustainable mobility. However, to make this transition effective, it is essential for citizens to have tools that help them understand the environmental impact of their daily transport decisions. This platform was created with precisely that purpose: to inform, raise awareness, and facilitate a clear comparison between different transport options from an environmental perspective.",
+	 	"objetivos-titulo": "Platform Objectives",
+        "objetivos-lista": [
+          "Raise public awareness about the environmental impact of urban transportation and promote more sustainable mobility habits.",
+          "Provide an educational tool that allows users to visualize and compare the CO₂ emissions (along with time and distance) of different transport modes in the city of Valencia.",
+          "Contribute to reducing CO₂ emissions by encouraging users to choose more sustainable transport alternatives."
+        ],
+        "emisiones-titulo": "CO₂ Emissions Comparison",
+        "emisiones-descripcion": "The following table and chart show the CO₂ emissions per person per kilometer for different modes of transport.",
+        "tabla-transporte": "Mode of transport",
+        "tabla-emisiones": "CO₂ Emissions (g/km per person)",
+        "transportes-lista": [
+          "Car (gasoline)",
+          "Car (diesel)",
+          "Car (hybrid)",
+          "Car (hydrogen)",
+          "Car (electric)",
+          "Taxi",
+          "Motorcycle (gasoline)",
+          "Motorcycle (electric)",
+          "Bus",
+          "Train",
+          "Metro",
+          "Electric scooter",
+          "Bicycle",
+          "Walking"
+        ],
+        "autor-titulo": "Author",
+        "tutor-titulo": "Supervisor",
+        "tecnologias-titulo": "Technologies used",
+        "tecnologias-lista": [
+          "Google Maps Directions API",
+          "Open Data Valencia",
+          "Leaflet + OpenStreetMap",
+          "Node.js and Express",
+          "HTML, CSS, and JavaScript"
+        ],
+        "legal-titulo": "Legal information",
+        "legal-texto": "Developed for academic purposes. No personal data is collected.",
+        "volver-boton": "Back to map"
+      },
+      "emisiones-intro": {
+    	  es: `
+    		  <p>
+    		  Con el objetivo de ofrecer al usuario datos fiables y coherentes sobre el impacto ambiental de sus decisiones de movilidad, se ha realizado una investigación exhaustiva basada en fuentes oficiales y técnicas. Para ello, se han consultado documentos del Instituto para la Diversificación y Ahorro de la Energía (IDAE), el Ministerio de Transportes, Movilidad y Agenda Urbana, la EMT de Valencia, así como estudios y portales técnicos como Car and Driver, Webfleet o Iberdrola.
+    		</p>
+    		<p>
+    		  Los valores representan las <strong>emisiones medias de CO₂ por persona y kilómetro</strong>, teniendo en cuenta el tipo de energía utilizada, el consumo estimado, y el nivel de ocupación medio en cada tipo de transporte. Se consideran tanto emisiones directas como indirectas, como en el caso de los vehículos eléctricos cuya electricidad proviene de una combinación de fuentes energéticas.
+    		</p>
+    		<p>
+    		  En el caso del transporte público, como el autobús, metro o tren, se ha asumido una <strong>ocupación media real</strong> basada en datos estadísticos, no una ideal o máxima. Para el taxi, se ha estimado una media ponderada según el tipo de motorización predominante en el parque móvil actual. En el caso del transporte en camión, se ha realizado una estimación directa a partir del consumo energético por tonelada y kilómetro.
+    		</p>
+    		<p>
+    		  <em>Nota:</em> el camión se ha excluido del gráfico comparativo porque sus emisiones por pasajero y kilómetro distorsionan significativamente la escala visual, dificultando la comparación entre el resto de medios de transporte.
+    		</p>
+    		<p>
+    		  A continuación, se presentan los valores utilizados por la plataforma para calcular el impacto ambiental de cada trayecto:
+    		</p>
+
+    	  `,
+    	  val: `
+    		  <p>
+    		  Amb l’objectiu d’oferir a l’usuari dades fiables i coherents sobre l’impacte ambiental de les seues decisions de mobilitat, s’ha realitzat una investigació exhaustiva basada en fonts oficials i tècniques. Per a això, s’han consultat documents de l’IDAE, el Ministeri de Transports, Mobilitat i Agenda Urbana, l’EMT de València, així com estudis i portals tècnics com Car and Driver, Webfleet o Iberdrola.
+    		</p>
+    		<p>
+    		  Els valors representen les <strong>emissions mitjanes de CO₂ per persona i quilòmetre</strong>, tenint en compte el tipus d’energia utilitzada, el consum estimat i el nivell mitjà d’ocupació de cada mitjà de transport. S’hi inclouen emissions directes i també indirectes, com les dels vehicles elèctrics, que depenen del mix energètic.
+    		</p>
+    		<p>
+    		  En el cas del transport públic, com l’autobús, el metro o el tren, s’ha considerat una <strong>ocupació mitjana real</strong> segons dades estadístiques, i no una ideal. Per al taxi, s’ha estimat una mitjana ponderada segons la motorizació real del parc mòbil actual. En el cas del camió, s’ha aplicat una estimació directa segons el consum energètic per tona i quilòmetre.
+    		</p>
+    		<p>
+    		  <em>Nota:</em> el camió ha sigut exclòs del gràfic comparatiu perquè les seues emissions per passatger i quilòmetre distorsionen notablement l’escala visual, dificultant la comparació amb la resta de mitjans de transport.
+    		</p>
+    		<p>
+    		  A continuació es mostren els valors utilitzats per la plataforma per a calcular l’impacte ambiental de cada trajecte:
+    		</p>
+
+    	  `,
+    	  en: `
+    		  <p>
+    		  In order to provide users with reliable and consistent information on the environmental impact of their mobility choices, a thorough review was conducted using official and technical sources. This includes documents from IDAE, the Spanish Ministry of Transport, Valencia’s EMT, and specialized portals such as Car and Driver, Webfleet, and Iberdrola.
+    		</p>
+    		<p>
+    		  The figures represent the <strong>average CO₂ emissions per person per kilometer</strong>, accounting for the type of energy used, estimated consumption, and typical average occupancy of each transport mode. Both direct and indirect emissions are included, such as those from electric vehicles whose energy comes from a national energy mix.
+    		</p>
+    		<p>
+    		  For public transportation such as buses, metro, or trains, a <strong>realistic average occupancy</strong> has been considered based on statistical data, rather than maximum capacity. For taxis, a weighted average was estimated based on the predominant engine types in circulation. Truck transport was calculated directly based on energy use per ton per kilometer.
+    		</p>
+    		<p>
+    		  <em>Note:</em> trucks have been excluded from the comparative chart because their emissions per passenger per kilometer greatly distort the scale, making it difficult to compare the remaining transport modes clearly.
+    		</p>
+    		<p>
+    		  Below are the reference values used by the platform to calculate the environmental impact of each journey:
+    		</p>
+
+    	  `
+    	}
+
+    };
+    
+    
+    
+    
+    function cambiarIdioma(nuevoIdioma) {
+      idiomaActual = nuevoIdioma;
+      localStorage.setItem('idioma', idiomaActual);
+      const t = traducciones[idiomaActual];
+      document.getElementById("titulo").innerText = t.titulo;
+      document.getElementById("contexto-titulo").innerText = t["contexto-titulo"];
+      document.getElementById("contexto-texto1").innerText = t["contexto-texto1"];
+      document.getElementById("contexto-texto2").innerText = t["contexto-texto2"];
+      document.getElementById("contexto-texto3").innerText = t["contexto-texto3"];
+      document.getElementById("contexto-texto4").innerText = t["contexto-texto4"];
+      document.getElementById("objetivos-titulo").innerText = t["objetivos-titulo"];
+      const objetivosLista = document.getElementById("objetivos-lista");
+      objetivosLista.innerHTML = "";
+      t["objetivos-lista"].forEach(obj => {
+        const li = document.createElement("li");
+        li.innerText = obj;
+        objetivosLista.appendChild(li);
+      });
+      document.getElementById("emisiones-titulo").innerText = t["emisiones-titulo"];
+      document.getElementById("emisiones-descripcion").innerText = t["emisiones-descripcion"];
+      document.getElementById("tabla-transporte").innerText = t["tabla-transporte"];
+      document.getElementById("tabla-emisiones").innerText = t["tabla-emisiones"];
+      const tbody = document.getElementById("emisiones-tbody");
+      tbody.innerHTML = "";
+      for (let i = 0; i < t["transportes-lista"].length; i++) {
+        const row = document.createElement("tr");
+        const col1 = document.createElement("td");
+        col1.innerText = t["transportes-lista"][i];
+        const col2 = document.createElement("td");
+        let valor = emisionesValores[i];
+        // Format the value to one decimal if needed
+        let valorStr = (Math.round(valor * 10) / 10).toString();
+        if (valorStr.indexOf('.') !== -1 && valorStr.endsWith('0')) {
+          valorStr = valorStr.replace(/\.0+$/, '');
+        }
+        col2.innerText = valorStr;
+        row.appendChild(col1);
+        row.appendChild(col2);
+        tbody.appendChild(row);
+      }
+      const chartContainer = document.getElementById("chart-container");
+      chartContainer.innerHTML = "";
+      const maxVal = Math.max(...emisionesValores);
+      for (let i = 0; i < t["transportes-lista"].length; i++) {
+        const label = t["transportes-lista"][i];
+        const value = emisionesValores[i];
+        const maxVal = Math.max(...emisionesValores);
+        const percentage = (value / maxVal) * 100;
+        // determine color based on value (green to red gradient capping at 150)
+        const cappedVal = Math.min(value, 150);
+        const hue = ((150 - cappedVal) / 150) * 120;
+        const color = "hsl(" + hue + ", 80%, 50%)";
+        const barLine = document.createElement("div");
+        barLine.className = "bar-line";
+        const labelSpan = document.createElement("span");
+        labelSpan.className = "bar-label";
+        labelSpan.innerText = label;
+        const trackDiv = document.createElement("div");
+        trackDiv.className = "bar-track";
+        const fillDiv = document.createElement("div");
+        fillDiv.className = "bar-fill";
+
+ 
+        fillDiv.style.width = percentage.toFixed(2) + "%"; // más preciso
+
+        fillDiv.style.backgroundColor = color;
+        // round fill corners appropriately
+        if (percentage >= 99.9) {
+          fillDiv.style.borderRadius = "5px";
+        }
+        trackDiv.appendChild(fillDiv);
+        const valueSpan = document.createElement("span");
+        valueSpan.className = "bar-value";
+        // Show numeric value with unit
+		let valDisplay = (Math.round(value * 10) / 10).toString();
+		if (valDisplay.indexOf('.') !== -1 && valDisplay.endsWith('0')) {
+		  valDisplay = valDisplay.replace(/\.0+$/, '');
+		}
+		valueSpan.innerText = valDisplay + " g/km";
+
+
+        barLine.appendChild(labelSpan);
+        barLine.appendChild(trackDiv);
+        barLine.appendChild(valueSpan);
+        chartContainer.appendChild(barLine);
+      }
+      document.getElementById("autor-titulo").innerText = t["autor-titulo"];
+      document.getElementById("tutor-titulo").innerText = t["tutor-titulo"];
+      document.getElementById("tecnologias-titulo").innerText = t["tecnologias-titulo"];
+      document.getElementById("legal-titulo").innerText = t["legal-titulo"];
+      document.getElementById("legal-texto").innerText = t["legal-texto"];
+      document.getElementById("volver-boton").innerText = t["volver-boton"];
+      const techList = document.getElementById("tecnologias-lista");
+      techList.innerHTML = "";
+      t["tecnologias-lista"].forEach(tech => {
+        const li = document.createElement("li");
+        li.innerText = tech;
+        techList.appendChild(li);
+      });
+      // Update flag selection
+      document.querySelectorAll('.bandera').forEach(flag => flag.classList.remove('seleccionado'));
+      if (idiomaActual === 'es') {
+        document.querySelector('.esp').classList.add('seleccionado');
+      } else if (idiomaActual === 'va') {
+        document.querySelector('.val').classList.add('seleccionado');
+      } else if (idiomaActual === 'en') {
+        document.querySelector('.en').classList.add('seleccionado');
+      }
+    }
+    const emisionesValores = [102.14, 79.28, 65, 71.42, 43, 78.61, 53, 14, 49.9, 33, 30, 3, 0, 0];
+    document.getElementById("emisiones-intro").innerHTML = traducciones["emisiones-intro"][idiomaActual];
+
+    // Initialize page with default or stored language
+    cambiarIdioma(idiomaActual);
+  </script>
+</body>
+</html>
