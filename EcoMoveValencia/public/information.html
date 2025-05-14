@@ -225,7 +225,7 @@
     <ul id="tecnologias-lista"></ul>
     <h2 id="legal-titulo"></h2>
     <p id="legal-texto"></p>
-    <a href="index.html" class="back-btn" id="volver-boton"></a>
+    <a href="mapa.html" class="back-btn" id="volver-boton"></a>
   </div>
   <script>
     // Set initial language from localStorage or default to Spanish
@@ -276,7 +276,29 @@
         ],
         "legal-titulo": "Información legal",
         "legal-texto": "Desarrollado con fines académicos. No se recopilan datos personales.",
-        "volver-boton": "Volver al mapa"
+        "volver-boton": "Volver al mapa",
+        "emisiones-intro": `
+  		  <p>
+  		  Con el objetivo de ofrecer al usuario datos fiables y coherentes sobre el impacto ambiental de sus decisiones de movilidad, se ha realizado una investigación exhaustiva basada en fuentes oficiales y técnicas. Para ello, se han consultado documentos del Instituto para la Diversificación y Ahorro de la Energía (IDAE), el Ministerio de Transportes, Movilidad y Agenda Urbana, la EMT de Valencia, así como estudios y portales técnicos como Car and Driver, Webfleet o Iberdrola.
+  		</p>
+  		<p>
+  		  Los valores representan las <strong>emisiones medias de CO₂ por persona y kilómetro</strong>, teniendo en cuenta el tipo de energía utilizada, el consumo estimado, y el nivel de ocupación medio en cada tipo de transporte. Se consideran tanto emisiones directas como indirectas, como en el caso de los vehículos eléctricos cuya electricidad proviene de una combinación de fuentes energéticas.
+  		</p>
+  		<p>
+  		  En el caso del transporte público, como el autobús, metro o tren, se ha asumido una <strong>ocupación media real</strong> basada en datos estadísticos, no una ideal o máxima. Para el taxi, se ha estimado una media ponderada según el tipo de motorización predominante en el parque móvil actual. En el caso del transporte en camión, se ha realizado una estimación directa a partir del consumo energético por tonelada y kilómetro.
+  		</p>
+  		<p>
+  		  <em>Nota 1:</em> el camión se ha excluido del gráfico comparativo porque sus emisiones por pasajero y kilómetro distorsionan significativamente la escala visual, dificultando la comparación entre el resto de medios de transporte.
+  		</p>
+  		  <p>
+  		  <em>Nota 2:</em> en el caso del patinete, se utiliza la ruta que proporciona Google Maps para trayectos en bicicleta. En entornos interurbanos, este tipo de movilidad puede estar restringido. No obstante, al tratarse de una herramienta didáctica y no orientada a la planificación real de rutas entre localidades, no se ha desactivado esta opción para trayectos interurbanos.
+  		</p>
+
+  		<p>
+  		  A continuación, se presentan los valores utilizados por la plataforma para calcular el impacto ambiental de cada trayecto:
+  		</p>
+
+  	  `,
       },
       val: {
         titulo: "Informació sobre la plataforma",
@@ -323,7 +345,28 @@
         ],
         "legal-titulo": "Informació legal",
         "legal-texto": "Desenvolupat amb finalitats acadèmiques. No es recullen dades personals.",
-        "volver-boton": "Tornar al mapa"
+        "volver-boton": "Tornar al mapa",
+        "emisiones-intro":`
+  		  <p>
+  		  Amb l’objectiu d’oferir a l’usuari dades fiables i coherents sobre l’impacte ambiental de les seues decisions de mobilitat, s’ha realitzat una investigació exhaustiva basada en fonts oficials i tècniques. Per a això, s’han consultat documents de l’IDAE, el Ministeri de Transports, Mobilitat i Agenda Urbana, l’EMT de València, així com estudis i portals tècnics com Car and Driver, Webfleet o Iberdrola.
+  		</p>
+  		<p>
+  		  Els valors representen les <strong>emissions mitjanes de CO₂ per persona i quilòmetre</strong>, tenint en compte el tipus d’energia utilitzada, el consum estimat i el nivell mitjà d’ocupació de cada mitjà de transport. S’hi inclouen emissions directes i també indirectes, com les dels vehicles elèctrics, que depenen del mix energètic.
+  		</p>
+  		<p>
+  		  En el cas del transport públic, com l’autobús, el metro o el tren, s’ha considerat una <strong>ocupació mitjana real</strong> segons dades estadístiques, i no una ideal. Per al taxi, s’ha estimat una mitjana ponderada segons la motorizació real del parc mòbil actual. En el cas del camió, s’ha aplicat una estimació directa segons el consum energètic per tona i quilòmetre.
+  		</p>
+  		<p>
+  		  <em>Nota 1:</em> el camió ha sigut exclòs del gràfic comparatiu perquè les seues emissions per passatger i quilòmetre distorsionen notablement l’escala visual, dificultant la comparació amb la resta de mitjans de transport.
+  		</p>
+    		<p>
+		 	 <em>Nota 2:</em>  en el cas del patinet, s’utilitza la ruta que proporciona Google Maps per a trajectes en bicicleta. En entorns interurbans, este tipus de mobilitat pot estar restringit. No obstant això, com que es tracta d’una eina didàctica i no està orientada a la planificació real de rutes entre localitats, no s’ha desactivat esta opció per a trajectes interurbans.
+			</p>
+  		<p>
+  		  A continuació es mostren els valors utilitzats per la plataforma per a calcular l’impacte ambiental de cada trajecte:
+  		</p>
+
+  	  `
       },
       en: {
         titulo: "Platform Information",
@@ -370,64 +413,30 @@
         ],
         "legal-titulo": "Legal information",
         "legal-texto": "Developed for academic purposes. No personal data is collected.",
-        "volver-boton": "Back to map"
+        "volver-boton": "Back to map",
+        "emisiones-intro":`
+  		  <p>
+  		  In order to provide users with reliable and consistent information on the environmental impact of their mobility choices, a thorough review was conducted using official and technical sources. This includes documents from IDAE, the Spanish Ministry of Transport, Valencia’s EMT, and specialized portals such as Car and Driver, Webfleet, and Iberdrola.
+  		</p>
+  		<p>
+  		  The figures represent the <strong>average CO₂ emissions per person per kilometer</strong>, accounting for the type of energy used, estimated consumption, and typical average occupancy of each transport mode. Both direct and indirect emissions are included, such as those from electric vehicles whose energy comes from a national energy mix.
+  		</p>
+  		<p>
+  		  For public transportation such as buses, metro, or trains, a <strong>realistic average occupancy</strong> has been considered based on statistical data, rather than maximum capacity. For taxis, a weighted average was estimated based on the predominant engine types in circulation. Truck transport was calculated directly based on energy use per ton per kilometer.
+  		</p>
+  		<p>
+  		  <em>Note 1:</em> trucks have been excluded from the comparative chart because their emissions per passenger per kilometer greatly distort the scale, making it difficult to compare the remaining transport modes clearly.
+  		</p>
+    		<p>
+		 	 <em>Note 2:</em>  It is worth noting that for electric scooters, the route provided by Google Maps for bicycle travel is used. In interurban environments, the use of this mode may be restricted. However, as this is an educational tool and not intended for real route planning between municipalities, the option has not been disabled for interurban journeys.
+			</p>
+  		<p>
+  		  Below are the reference values used by the platform to calculate the environmental impact of each journey:
+  		</p>
+
+  	  `
       },
-      "emisiones-intro": {
-    	  es: `
-    		  <p>
-    		  Con el objetivo de ofrecer al usuario datos fiables y coherentes sobre el impacto ambiental de sus decisiones de movilidad, se ha realizado una investigación exhaustiva basada en fuentes oficiales y técnicas. Para ello, se han consultado documentos del Instituto para la Diversificación y Ahorro de la Energía (IDAE), el Ministerio de Transportes, Movilidad y Agenda Urbana, la EMT de Valencia, así como estudios y portales técnicos como Car and Driver, Webfleet o Iberdrola.
-    		</p>
-    		<p>
-    		  Los valores representan las <strong>emisiones medias de CO₂ por persona y kilómetro</strong>, teniendo en cuenta el tipo de energía utilizada, el consumo estimado, y el nivel de ocupación medio en cada tipo de transporte. Se consideran tanto emisiones directas como indirectas, como en el caso de los vehículos eléctricos cuya electricidad proviene de una combinación de fuentes energéticas.
-    		</p>
-    		<p>
-    		  En el caso del transporte público, como el autobús, metro o tren, se ha asumido una <strong>ocupación media real</strong> basada en datos estadísticos, no una ideal o máxima. Para el taxi, se ha estimado una media ponderada según el tipo de motorización predominante en el parque móvil actual. En el caso del transporte en camión, se ha realizado una estimación directa a partir del consumo energético por tonelada y kilómetro.
-    		</p>
-    		<p>
-    		  <em>Nota:</em> el camión se ha excluido del gráfico comparativo porque sus emisiones por pasajero y kilómetro distorsionan significativamente la escala visual, dificultando la comparación entre el resto de medios de transporte.
-    		</p>
-    		<p>
-    		  A continuación, se presentan los valores utilizados por la plataforma para calcular el impacto ambiental de cada trayecto:
-    		</p>
-
-    	  `,
-    	  val: `
-    		  <p>
-    		  Amb l’objectiu d’oferir a l’usuari dades fiables i coherents sobre l’impacte ambiental de les seues decisions de mobilitat, s’ha realitzat una investigació exhaustiva basada en fonts oficials i tècniques. Per a això, s’han consultat documents de l’IDAE, el Ministeri de Transports, Mobilitat i Agenda Urbana, l’EMT de València, així com estudis i portals tècnics com Car and Driver, Webfleet o Iberdrola.
-    		</p>
-    		<p>
-    		  Els valors representen les <strong>emissions mitjanes de CO₂ per persona i quilòmetre</strong>, tenint en compte el tipus d’energia utilitzada, el consum estimat i el nivell mitjà d’ocupació de cada mitjà de transport. S’hi inclouen emissions directes i també indirectes, com les dels vehicles elèctrics, que depenen del mix energètic.
-    		</p>
-    		<p>
-    		  En el cas del transport públic, com l’autobús, el metro o el tren, s’ha considerat una <strong>ocupació mitjana real</strong> segons dades estadístiques, i no una ideal. Per al taxi, s’ha estimat una mitjana ponderada segons la motorizació real del parc mòbil actual. En el cas del camió, s’ha aplicat una estimació directa segons el consum energètic per tona i quilòmetre.
-    		</p>
-    		<p>
-    		  <em>Nota:</em> el camió ha sigut exclòs del gràfic comparatiu perquè les seues emissions per passatger i quilòmetre distorsionen notablement l’escala visual, dificultant la comparació amb la resta de mitjans de transport.
-    		</p>
-    		<p>
-    		  A continuació es mostren els valors utilitzats per la plataforma per a calcular l’impacte ambiental de cada trajecte:
-    		</p>
-
-    	  `,
-    	  en: `
-    		  <p>
-    		  In order to provide users with reliable and consistent information on the environmental impact of their mobility choices, a thorough review was conducted using official and technical sources. This includes documents from IDAE, the Spanish Ministry of Transport, Valencia’s EMT, and specialized portals such as Car and Driver, Webfleet, and Iberdrola.
-    		</p>
-    		<p>
-    		  The figures represent the <strong>average CO₂ emissions per person per kilometer</strong>, accounting for the type of energy used, estimated consumption, and typical average occupancy of each transport mode. Both direct and indirect emissions are included, such as those from electric vehicles whose energy comes from a national energy mix.
-    		</p>
-    		<p>
-    		  For public transportation such as buses, metro, or trains, a <strong>realistic average occupancy</strong> has been considered based on statistical data, rather than maximum capacity. For taxis, a weighted average was estimated based on the predominant engine types in circulation. Truck transport was calculated directly based on energy use per ton per kilometer.
-    		</p>
-    		<p>
-    		  <em>Note:</em> trucks have been excluded from the comparative chart because their emissions per passenger per kilometer greatly distort the scale, making it difficult to compare the remaining transport modes clearly.
-    		</p>
-    		<p>
-    		  Below are the reference values used by the platform to calculate the environmental impact of each journey:
-    		</p>
-
-    	  `
-    	}
+     
 
     };
     
@@ -526,6 +535,7 @@
       document.getElementById("legal-titulo").innerText = t["legal-titulo"];
       document.getElementById("legal-texto").innerText = t["legal-texto"];
       document.getElementById("volver-boton").innerText = t["volver-boton"];
+      document.getElementById("emisiones-intro").innerHTML = t["emisiones-intro"];
       const techList = document.getElementById("tecnologias-lista");
       techList.innerHTML = "";
       t["tecnologias-lista"].forEach(tech => {
@@ -537,14 +547,14 @@
       document.querySelectorAll('.bandera').forEach(flag => flag.classList.remove('seleccionado'));
       if (idiomaActual === 'es') {
         document.querySelector('.esp').classList.add('seleccionado');
-      } else if (idiomaActual === 'va') {
+      } else if (idiomaActual === 'val') {
         document.querySelector('.val').classList.add('seleccionado');
       } else if (idiomaActual === 'en') {
         document.querySelector('.en').classList.add('seleccionado');
       }
     }
     const emisionesValores = [102.14, 79.28, 65, 71.42, 43, 78.61, 53, 14, 49.9, 33, 30, 3, 0, 0];
-    document.getElementById("emisiones-intro").innerHTML = traducciones["emisiones-intro"][idiomaActual];
+
 
     // Initialize page with default or stored language
     cambiarIdioma(idiomaActual);
