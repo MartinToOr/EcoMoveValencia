@@ -1326,9 +1326,6 @@ function muestraRutaELECTRIC_MOTORBIKE(transporteImp){
 }	
 		
 function muestraRutaValenbisi(){
-	document.getElementById("transport-select").value = "bici";
-	toggleTransport("bici");	
-	sincronizarSelectorPersonalizado("bici");	
 
 	const urlBICI = "https://ecomovevalencia.onrender.com/api/buscaEstacionBici?Olat="+pointA.lat+"&Olng="+pointA.lng+"&Dlat="+pointB.lat+"&Dlng="+pointB.lng+"&ignoreAviabilityO=0&ignoreAviabilityD=0";
 
@@ -1360,13 +1357,28 @@ function muestraRutaValenbisi(){
 	    }
 	};
 
-	peticionBICI()
-	    .then(respuesta => {
-			console.log(respuesta);
-	        if (!respuesta) {
-	            console.error("No se pudo obtener la ruta en bicicleta.");
-	            return;
-	        }
+        peticionBICI()
+            .then(respuesta => {
+                        console.log(respuesta);
+                if (!respuesta) {
+                    console.error("No se pudo obtener la ruta en bicicleta.");
+                    return;
+                }
+
+                let esEnBici = false;
+                if (respuesta.bikingRoute && respuesta.bikingRoute.status === "OK") {
+                    esEnBici = true;
+                }
+
+                if (esEnBici) {
+                    document.getElementById("transport-select").value = "bici";
+                    toggleTransport("bici");
+                    sincronizarSelectorPersonalizado("bici");
+                } else {
+                    document.getElementById("transport-select").value = "none";
+                    toggleTransport("none");
+                    sincronizarSelectorPersonalizado("none");
+                }
 
 	        // Eliminar rutas previas del mapa
 	        if (routePolyline) {
@@ -1408,9 +1420,6 @@ function muestraRutaValenbisi(){
 
 
 function muestraRutaTaxi(){
-	document.getElementById("transport-select").value = "taxi";
-	toggleTransport("taxi");
-	sincronizarSelectorPersonalizado("taxi");	
 
 	const urlTAXI = "https://ecomovevalencia.onrender.com/api/buscaEstacionTaxi?Olat="+pointA.lat+"&Olng="+pointA.lng+"&Dlat="+pointB.lat+"&Dlng="+pointB.lng;
 
@@ -1442,13 +1451,28 @@ function muestraRutaTaxi(){
 	    }
 	};
 
-	peticionTAXI()
-	    .then(respuesta => {
-			console.log(respuesta);
-	        if (!respuesta) {
-	            console.error("No se pudo obtener la ruta en bicicleta.");
-	            return;
-	        }
+        peticionTAXI()
+            .then(respuesta => {
+                        console.log(respuesta);
+                if (!respuesta) {
+                    console.error("No se pudo obtener la ruta en bicicleta.");
+                    return;
+                }
+
+                let esEnTaxi = false;
+                if (respuesta.taxi && respuesta.taxi.status === "OK") {
+                    esEnTaxi = true;
+                }
+
+                if (esEnTaxi) {
+                    document.getElementById("transport-select").value = "taxi";
+                    toggleTransport("taxi");
+                    sincronizarSelectorPersonalizado("taxi");
+                } else {
+                    document.getElementById("transport-select").value = "none";
+                    toggleTransport("none");
+                    sincronizarSelectorPersonalizado("none");
+                }
 
 	        // Eliminar rutas previas del mapa
 	        if (routePolyline) {
