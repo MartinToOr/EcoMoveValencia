@@ -2186,8 +2186,23 @@ function muestraRutaDesdeTabla(respuesta){
 const originInput = document.getElementById("origin-input");
 const destinationInput = document.getElementById("destination-input");
 
-const originAutocomplete = new google.maps.places.Autocomplete(originInput);
-const destinationAutocomplete = new google.maps.places.Autocomplete(destinationInput);
+let originAutocomplete;
+let destinationAutocomplete;
+let directionsService;
+let distanceService;
+
+function initGoogleApis() {
+    directionsService = new google.maps.DirectionsService();
+    distanceService = new google.maps.DistanceMatrixService();
+    originAutocomplete = new google.maps.places.Autocomplete(originInput);
+    destinationAutocomplete = new google.maps.places.Autocomplete(destinationInput);
+}
+
+if (window.google && window.google.maps && window.google.maps.places) {
+    initGoogleApis();
+} else {
+    window.addEventListener('google-maps-loaded', initGoogleApis);
+}
 
 const minLat = 39.00, maxLat = 39.9;
 const minLng = -0.75, maxLng = 0.1;

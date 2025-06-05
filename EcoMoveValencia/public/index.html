@@ -782,6 +782,8 @@
       .then(cfg => {
         const script = document.createElement('script');
         script.src = `https://maps.googleapis.com/maps/api/js?key=${cfg.apiKey}&libraries=geometry,places`;
+        script.async = true;
+        script.onload = () => window.dispatchEvent(new Event('google-maps-loaded'));
         document.head.appendChild(script);
       });
   </script>
@@ -1182,8 +1184,6 @@ L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
     let valenbisiStations = []; // Almacenar estaciones de Valenbisi
     let transportMode = "TRANSIT";
 
-    var directionsService = new google.maps.DirectionsService();
-    var service = new google.maps.DistanceMatrixService();
 
     // Función para crear un marcador en Leaflet
     function createMarker(latlng, color) {
