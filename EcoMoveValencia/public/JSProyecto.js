@@ -1034,11 +1034,12 @@ function muestraRutaRodalia(){
 			            }
 						
 						
-						let dataString = JSON.stringify(respuesta);
-						
-						if (!dataString.includes("HEAVY_RAIL")){
-							mostrarPopupInfo(tm("ruta_rodalia_alternativa"), "info");
-						}
+                                                let dataString = JSON.stringify(respuesta);
+
+                                                const hasRodalia = dataString.includes("HEAVY_RAIL");
+                                                if (!hasRodalia){
+                                                        mostrarPopupInfo(tm("ruta_rodalia_alternativa"), "info");
+                                                }
 
 			            // Eliminar rutas previas del mapa
 			            if (routePolyline) {
@@ -1063,9 +1064,15 @@ function muestraRutaRodalia(){
 												    routePolyline.push(L.polyline(stepCoords, { color: step.travel_mode === "TRANSIT" ? "orange" : "green", weight: 4 }).addTo(map));
 												});
 						
-												document.getElementById("transport-select").value = "rodalia";
-												toggleTransport("rodalia", currentRouteCoords);
-												sincronizarSelectorPersonalizado("rodalia");
+                                                                               if(hasRodalia){
+                                                                                       document.getElementById("transport-select").value = "rodalia";
+                                                                                       toggleTransport("rodalia", currentRouteCoords);
+                                                                                       sincronizarSelectorPersonalizado("rodalia");
+                                                                               } else {
+                                                                                       document.getElementById("transport-select").value = "none";
+                                                                                       toggleTransport("none");
+                                                                                       sincronizarSelectorPersonalizado("none");
+                                                                               }
 
 						
 
