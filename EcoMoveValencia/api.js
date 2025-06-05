@@ -3,6 +3,14 @@ import cors from 'cors';
 import path from 'path';
 import fetch from "node-fetch";
 import { fileURLToPath } from 'url';
+import fs from 'fs';
+import dotenv from 'dotenv';
+
+if (fs.existsSync('.env')) {
+  dotenv.config();
+} else if (fs.existsSync('.env.example')) {
+  dotenv.config({ path: '.env.example' });
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
