@@ -721,7 +721,7 @@ function formatTime(totalSeconds) {
 }
 
                 // Formatear el tiempo mostrado en la tabla SlickGrid
-                // Si supera los 60 minutos, se convierte a horas y minutos
+                // Si supera los 60 minutos, se convierte a horas, minutos y segundos
                 function formatGridTime(totalSeconds) {
                     totalSeconds = Math.round(totalSeconds);
                     const seconds = totalSeconds % 60;
