@@ -433,7 +433,7 @@ let inicio;
 		/* Función para formatear el tiempo.
 		   - Si es menor a 3600 segundos, lo muestra en minutos y segundos.
 		   - Si supera 3600 segundos, lo muestra en horas, minutos y segundos. */
-		function formatTime(totalSeconds) {
+function formatTime(totalSeconds) {
 		    totalSeconds = Math.round(totalSeconds);
 		    if (totalSeconds < 3600) {
 		        let minutes = Math.floor(totalSeconds / 60);
@@ -610,7 +610,7 @@ let inicio;
 		        } : {
 		            mode: modeTranslations[idiomaActual][item.mode] || item.mode,
 		            distance: item.totalDistance ? `${(item.totalDistance / 1000).toFixed(2)} km` : "-",
-		            time: item.totalTime ? `${Math.floor(item.totalTime / 60)} min ${(item.totalTime % 60).toFixed(0)} s` : "-",
+                            time: item.totalTime ? formatGridTime(item.totalTime) : "-",
 		            co2: item.co2 ? item.co2.toFixed(2) : "0",
 		            detail: groupSubRoutes(item.subRoutes, item.mode),
 		            route: item
@@ -719,6 +719,18 @@ let inicio;
 			console.log(`Tiempo de ejecución: ${(fin - inicio).toFixed(0)} milisegundos`);
 
 }
+
+                // Formatear el tiempo mostrado en la tabla SlickGrid
+                // Si supera los 60 minutos, se convierte a horas y minutos
+                function formatGridTime(totalSeconds) {
+                    let minutes = Math.round(totalSeconds / 60);
+                    if (minutes >= 60) {
+                        let hours = Math.floor(minutes / 60);
+                        let remaining = minutes % 60;
+                        return `${hours}h ${remaining}min`;
+                    }
+                    return `${minutes}min`;
+                }
 
 function timeToSeconds(timeStr) {
     if (!timeStr) return 0;
