@@ -1555,7 +1555,7 @@ function muestraRutaTaxi(){
 
   const modal = document.createElement("div");
   modal.id = "googleMapsModal";
-  modal.style = `position:fixed;${window.innerWidth<=758?"top:10vh;left:5vw;width:90vw;font-size:4vw;":"top:10vh;right:20px;width:370px;font-size:16px;"}max-height:80vh;background:white;z-index:10000;overflow-y:auto;box-shadow:0 8px 16px rgba(0,0,0,0.25);border-radius:12px;padding:20px;font-family:Arial,sans-serif;`;
+  modal.style = `position:fixed;${window.innerWidth<=758?"top:10vh;left:5vw;width:90vw;font-size:4vw;":"top:10vh;right:20px;width:390px;font-size:16px;"}max-height:80vh;background:white;z-index:10000;overflow-y:auto;box-shadow:0 8px 16px rgba(0,0,0,0.25);border-radius:12px;padding:20px;font-family:Arial,sans-serif;`;
 
   modal.innerHTML = `
     <button id="closeModal" style="position:absolute;top:10px;right:10px;width:30px;height:30px;background:#ef4444;color:white;border:none;border-radius:50%;font-size:20px;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;">&times;</button>
