@@ -44,12 +44,19 @@ let taxiStations = [];
 let stationUsage;
 let stationBusUsage;
 let stationRodaliaUsage;
-let apiKey = "AIzaSyCzX88lbn1Xa_pouaPX4k_4IjRuJsjB064";
+// Clave de Google Maps obtenida de la variable de entorno
+const apiKey = process.env.GOOGLE_MAPS_API_KEY || "";
 const router = express.Router();
 app.use(cors());
 app.use(express.json()); // Asegura que el body se maneje como JSON
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public'))); 
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Endpoint para proporcionar la clave de Google Maps al cliente
+app.get('/api/google-maps-key', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.json({ apiKey });
+});
 // Ruta de prueba
 app.get('/api/getBicis', (req, res) => {
 	res.setHeader("Content-Type", "application/json");
