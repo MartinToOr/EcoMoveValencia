@@ -433,7 +433,7 @@ let inicio;
 		/* Función para formatear el tiempo.
 		   - Si es menor a 3600 segundos, lo muestra en minutos y segundos.
 		   - Si supera 3600 segundos, lo muestra en horas, minutos y segundos. */
-		function formatTime(totalSeconds) {
+function formatTime(totalSeconds) {
 		    totalSeconds = Math.round(totalSeconds);
 		    if (totalSeconds < 3600) {
 		        let minutes = Math.floor(totalSeconds / 60);
@@ -610,7 +610,7 @@ let inicio;
 		        } : {
 		            mode: modeTranslations[idiomaActual][item.mode] || item.mode,
 		            distance: item.totalDistance ? `${(item.totalDistance / 1000).toFixed(2)} km` : "-",
-		            time: item.totalTime ? `${Math.floor(item.totalTime / 60)} min ${(item.totalTime % 60).toFixed(0)} s` : "-",
+                            time: item.totalTime ? formatGridTime(item.totalTime) : "-",
 		            co2: item.co2 ? item.co2.toFixed(2) : "0",
 		            detail: groupSubRoutes(item.subRoutes, item.mode),
 		            route: item
@@ -719,6 +719,26 @@ let inicio;
 			console.log(`Tiempo de ejecución: ${(fin - inicio).toFixed(0)} milisegundos`);
 
 }
+
+                // Formatear el tiempo mostrado en la tabla SlickGrid
+                // Si supera los 60 minutos, se convierte a horas y minutos
+                function formatGridTime(totalSeconds) {
+                    totalSeconds = Math.round(totalSeconds);
+                    const seconds = totalSeconds % 60;
+                    const totalMinutes = Math.floor(totalSeconds / 60);
+
+                    if (totalMinutes >= 60) {
+                        const hours = Math.floor(totalMinutes / 60);
+                        const minutes = totalMinutes % 60;
+                        return `${hours}h ${minutes}min ${seconds}s`;
+                    }
+
+                    if (totalMinutes > 0) {
+                        return `${totalMinutes}min ${seconds}s`;
+                    }
+
+                    return `${seconds}s`;
+                }
 
 function timeToSeconds(timeStr) {
     if (!timeStr) return 0;
