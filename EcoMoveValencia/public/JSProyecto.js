@@ -710,6 +710,13 @@ function formatTime(totalSeconds) {
 			    .slick-header-columns {
 			        height: 40px !important;
 			    }
+				.ia-recommended-cell {
+					background: #dcfce7 !important;
+				}
+				.ia-recommended-cell--mode {
+					background: #dcfce7 !important;
+					font-weight: bold !important;
+				}
 			`;
 			document.head.appendChild(style);
 		    document.body.appendChild(modal);
@@ -798,12 +805,12 @@ function formatTime(totalSeconds) {
 				if (recommendedIndex >= 0) {
 					grid.setCellCssStyles("iaRecommendedRow", {
 						[recommendedIndex]: {
-							mode: "background: #dcfce7; font-weight: bold;",
-							distance: "background: #dcfce7;",
-							time: "background: #dcfce7;",
-							co2: "background: #dcfce7;",
-							detail: "background: #dcfce7;",
-							ruta: "background: #dcfce7;"
+							mode: "ia-recommended-cell--mode",
+							distance: "ia-recommended-cell",
+							time: "ia-recommended-cell",
+							co2: "ia-recommended-cell",
+							detail: "ia-recommended-cell",
+							ruta: "ia-recommended-cell"
 						}
 					});
 				}
