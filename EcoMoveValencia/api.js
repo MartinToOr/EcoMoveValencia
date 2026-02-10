@@ -18,7 +18,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = process.env.PORT || 3000;
 const openAiApiKey = process.env.OPENAI_API_KEY || "";
-const openAiModel = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const openAiModel = process.env.OPENAI_MODEL || "gpt-4.1-nano";
 
 
 
@@ -314,7 +314,6 @@ app.post('/api/recommend-transport', async (req, res) => {
 
     const rawCandidates = Array.isArray(req.body?.candidates) ? req.body.candidates : [];
     const userContext = typeof req.body?.context === 'string' ? req.body.context.trim() : '';
-
     const candidates = rawCandidates
         .filter(candidate => candidate && !candidate.error && Number.isFinite(candidate.totalDistance) && Number.isFinite(candidate.totalTime))
         .map(candidate => ({
@@ -328,13 +327,56 @@ app.post('/api/recommend-transport', async (req, res) => {
         return res.status(400).json({ error: 'No hay candidatas válidas para recomendar.' });
     }
 
-    const systemPrompt = `Eres un asistente de movilidad sostenible de Valencia. Tu objetivo es elegir el mejor transporte equilibrando: emisiones CO2 (prioridad alta), tiempo de viaje y distancia total. Devuelve SIEMPRE JSON válido con este formato exacto: {"recommendedMode":"MODO","reason":"justificación breve en español"}. El campo recommendedMode debe coincidir exactamente con uno de los modos recibidos.`;
+    const systemPrompt = `Eres un asistente experto en movilidad sostenible de Valencia. Debes recomendar UN modo entre los candidatos y justificar la decisión con datos concretos de la ruta.
+
+Reglas obligatorias:
+1) Devuelve SIEMPRE JSON válido con el formato exacto: {"recommendedMode":"MODO","reason":"explicación en español"}.
+2) recommendedMode debe coincidir exactamente con uno de los modos recibidos.
+3) La reason debe sonar natural y experta (3-5 frases) e incluir al menos: tiempo aproximado, distancia y CO2 del modo recomendado.
+4) Además, en la misma reason añade dos alternativas tipo: "si priorizas tiempo..." y "si priorizas emisiones/distancia..." para que el usuario vea las tres perspectivas.
+5) Evita recomendaciones poco realistas para trayectos largos: WALKING si distancia > 10km, BICYCLING/Valenbisi/PATINETE si distancia > 15km, salvo que no exista ninguna alternativa motorizada o de transporte público válida.`;
 
     const userPrompt = {
         ciudad: 'Valencia',
         contextoUsuario: userContext || 'Sin contexto adicional',
-        criterios: 'Prioriza sostenibilidad, después tiempo de viaje y por último distancia.',
         candidatos: candidates
+    };
+
+
+    const minMax = (values) => ({ min: Math.min(...values), max: Math.max(...values) });
+    const normalize = (value, min, max) => (max === min ? 0 : (value - min) / (max - min));
+    const isUnrealisticActiveMode = (candidate) => {
+        if (!candidate) return false;
+        if (candidate.mode === 'WALKING' && candidate.totalDistance > 10000) return true;
+        if (['BICYCLING', 'Valenbisi', 'PATINETE'].includes(candidate.mode) && candidate.totalDistance > 15000) return true;
+        return false;
+    };
+
+    const pickFallbackCandidate = () => {
+        const co2Range = minMax(candidates.map(candidate => candidate.co2));
+        const timeRange = minMax(candidates.map(candidate => candidate.totalTime));
+        const distanceRange = minMax(candidates.map(candidate => candidate.totalDistance));
+
+        const goals = {
+            co2: { co2: 0.7, time: 0.2, distance: 0.1 },
+            time: { co2: 0.1, time: 0.7, distance: 0.2 },
+            distance: { co2: 0.1, time: 0.2, distance: 0.7 },
+            balanced: { co2: 0.5, time: 0.3, distance: 0.2 }
+        };
+        const weights = goals.balanced;
+
+        const scored = candidates
+            .filter(candidate => !isUnrealisticActiveMode(candidate))
+            .map(candidate => {
+                const co2Norm = normalize(candidate.co2, co2Range.min, co2Range.max);
+                const timeNorm = normalize(candidate.totalTime, timeRange.min, timeRange.max);
+                const distanceNorm = normalize(candidate.totalDistance, distanceRange.min, distanceRange.max);
+                const score = (co2Norm * weights.co2) + (timeNorm * weights.time) + (distanceNorm * weights.distance);
+                return { candidate, score };
+            })
+            .sort((a, b) => a.score - b.score);
+
+        return scored[0]?.candidate || candidates[0];
     };
 
     try {
@@ -374,16 +416,23 @@ app.post('/api/recommend-transport', async (req, res) => {
             return res.status(500).json({ error: 'Respuesta de OpenAI no es JSON válido.', details: content });
         }
 
-        const recommendedMode = parsed?.recommendedMode;
-        const reason = parsed?.reason || 'Sin justificación proporcionada.';
-        const isValidMode = candidates.some(candidate => candidate.mode === recommendedMode);
+        let recommendedMode = parsed?.recommendedMode;
+        let reason = parsed?.reason || 'Sin justificación proporcionada.';
+        let recommendedCandidate = candidates.find(candidate => candidate.mode === recommendedMode);
 
-        if (!isValidMode) {
-            return res.status(500).json({
-                error: 'OpenAI recomendó un modo fuera de la lista de candidatos.',
-                details: parsed
-            });
+        if (!recommendedCandidate || isUnrealisticActiveMode(recommendedCandidate)) {
+            recommendedCandidate = pickFallbackCandidate();
+            recommendedMode = recommendedCandidate.mode;
+            reason = `He ajustado la recomendación a ${recommendedMode} para que sea realista con la distancia del trayecto. Entre las alternativas disponibles, ofrece un buen equilibrio práctico entre emisiones, tiempo y distancia.`;
         }
+
+        const toMinutes = (seconds) => Math.round((seconds || 0) / 60);
+        const toKm = (meters) => ((meters || 0) / 1000).toFixed(1);
+        const bestByTime = [...candidates].sort((a, b) => a.totalTime - b.totalTime)[0];
+        const bestByCo2 = [...candidates].sort((a, b) => a.co2 - b.co2)[0];
+        const bestByDistance = [...candidates].sort((a, b) => a.totalDistance - b.totalDistance)[0];
+
+        reason = `${reason} Si priorizas tiempo, ${bestByTime.mode} tarda aprox. ${toMinutes(bestByTime.totalTime)} min para ${toKm(bestByTime.totalDistance)} km. Si priorizas emisiones, ${bestByCo2.mode} se mueve en torno a ${bestByCo2.co2.toFixed(0)} g CO2. Si priorizas distancia, ${bestByDistance.mode} recorre unos ${toKm(bestByDistance.totalDistance)} km.`;
 
         return res.json({ recommendedMode, reason, candidatesCount: candidates.length });
     } catch (error) {
