@@ -533,7 +533,8 @@ function formatTime(totalSeconds) {
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
 						context: 'Seleccionar el mejor transporte entre origen y destino en Valencia.',
-						candidates: validCandidates
+						candidates: validCandidates,
+						language: idiomaActual
 					})
 				});
 
@@ -543,7 +544,10 @@ function formatTime(totalSeconds) {
 					return null;
 				}
 
-				return await response.json();
+				const payload = await response.json();
+				if (!payload || typeof payload !== "object") return null;
+				if (payload.reason != null) payload.reason = String(payload.reason);
+				return payload;
 			} catch (error) {
 				console.warn('Error al solicitar recomendación IA:', error);
 				return null;
@@ -562,7 +566,7 @@ function formatTime(totalSeconds) {
 
 			const modal = document.createElement("div");
 			modal.id = "aiRecommendationModal";
-			modal.style = "position:fixed;inset:0;background:rgba(15,23,42,0.52);display:flex;align-items:center;justify-content:center;z-index:10030;padding:16px;";
+			modal.style = "position:fixed;inset:0;background:rgba(15,23,42,0.52);display:flex;align-items:center;justify-content:center;z-index:2147483647;padding:16px;";
 
 			const card = document.createElement("div");
 			card.style = "position:relative;background:#ffffff;border-radius:16px;padding:16px;max-width:min(94vw,700px);width:100%;box-shadow:0 14px 38px rgba(2,6,23,0.25);";
@@ -574,19 +578,23 @@ function formatTime(totalSeconds) {
 			const content = document.createElement("div");
 			content.style = "display:flex;align-items:flex-end;gap:12px;padding-top:22px;";
 
-			const robotAvatar = document.createElement("div");
-			robotAvatar.style = "width:72px;height:72px;min-width:72px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:38px;box-shadow:0 4px 12px rgba(30,64,175,0.15);";
-			robotAvatar.textContent = "🤖";
+			const robotAvatar = document.createElement("img");
+			robotAvatar.alt = "Robot IA";
+			robotAvatar.src = "img/robot_bocalisa.png";
+			robotAvatar.onerror = () => {
+				robotAvatar.style.display = "none";
+			};
+			robotAvatar.style = "width:84px;height:84px;min-width:84px;border-radius:50%;background:#dbeafe;object-fit:cover;box-shadow:0 4px 12px rgba(30,64,175,0.15);";
 
 			const bubble = document.createElement("div");
 			bubble.style = "position:relative;flex:1;background:#eff6ff;border:1px solid #93c5fd;color:#1e3a8a;border-radius:14px;padding:14px;line-height:1.45;min-height:120px;";
 
 			const bubbleTitle = document.createElement("div");
 			bubbleTitle.style = "font-weight:700;margin-bottom:6px;";
-			bubbleTitle.textContent = `🤖 ${t("ia_recomendacion")}: ${translatedMode}`;
+			bubbleTitle.textContent = `${t("ia_recomendacion")}: ${translatedMode}`;
 
 			const bubbleReason = document.createElement("div");
-			const fullReason = aiRecommendation.reason || t("ia_error");
+			const fullReason = String(aiRecommendation?.reason ?? t("ia_error")).trim() || t("ia_error");
 
 			const tail = document.createElement("div");
 			tail.style = "position:absolute;left:-9px;bottom:16px;width:18px;height:18px;background:#eff6ff;border-left:1px solid #93c5fd;border-bottom:1px solid #93c5fd;transform:rotate(45deg);";
@@ -606,21 +614,30 @@ function formatTime(totalSeconds) {
 			understoodButton.style = "background:#e5e7eb;color:#111827;border:none;border-radius:10px;padding:8px 12px;cursor:pointer;";
 
 			const routeButton = document.createElement("button");
-			routeButton.textContent = `🤖 ${t("ia_ver_ruta")}`;
+			routeButton.textContent = t("ia_ver_ruta");
 			routeButton.style = "background:#10b981;color:#fff;border:none;border-radius:10px;padding:8px 12px;cursor:pointer;display:none;";
 
 			let typingIndex = 0;
+			let mouthToggle = false;
+			const speakingFrameTimer = setInterval(() => {
+				mouthToggle = !mouthToggle;
+				robotAvatar.src = mouthToggle ? "img/robot_bocalisa.png" : "img/robot_bocaredonda.png";
+			}, 180);
+
 			const typingTimer = setInterval(() => {
 				typingIndex += 1;
 				bubbleReason.textContent = fullReason.slice(0, typingIndex);
 				if (typingIndex >= fullReason.length) {
 					clearInterval(typingTimer);
+					clearInterval(speakingFrameTimer);
+					robotAvatar.src = "img/robot_contento.png";
 					routeButton.style.display = "inline-block";
 				}
 			}, 18);
 
 			const closeModal = () => {
 				clearInterval(typingTimer);
+				clearInterval(speakingFrameTimer);
 				modal.remove();
 			};
 
@@ -675,7 +692,7 @@ function formatTime(totalSeconds) {
 
 		    let modalContent = document.createElement("div");
 			const isMobile = window.innerWidth <= 768;
-			modalContent.style = `background-color:#fff;padding:20px;border-radius:8px;position:relative;box-sizing:border-box;width:${isMobile ? "95vw" : "1300px"};height:${isMobile ? "78vh" : "530px"};max-height:90vh;`;
+			modalContent.style = `background-color:#fff;padding:20px;border-radius:8px;position:relative;box-sizing:border-box;width:${isMobile ? "95vw" : "1300px"};max-height:94vh;`;
 
 		    let closeButton = document.createElement("button");
 		    closeButton.textContent = "✖";
@@ -692,13 +709,16 @@ function formatTime(totalSeconds) {
 
 		    let gridContainer = document.createElement("div");
 		    gridContainer.id = "gridContainer";
-		    gridContainer.style = "width:100%;height:calc(100% - 120px);margin-top:40px;";
+		    gridContainer.style = "width:100%;height:auto;margin-top:40px;";
 		    modalContent.appendChild(gridContainer);
 
 		    modal.appendChild(modalContent);
 			
-			const style = document.createElement("style");
-			style.textContent = `
+			let style = document.getElementById("comparison-grid-style");
+			if (!style) {
+				style = document.createElement("style");
+				style.id = "comparison-grid-style";
+				style.textContent = `
 			    .slick-header-column {
 			        height: 40px !important;
 			        line-height: 40px !important;
@@ -707,8 +727,16 @@ function formatTime(totalSeconds) {
 			    .slick-header-columns {
 			        height: 40px !important;
 			    }
+				.ia-recommended-cell {
+					background: #dcfce7 !important;
+				}
+				.ia-recommended-cell--mode {
+					background: #dcfce7 !important;
+					font-weight: bold !important;
+				}
 			`;
-			document.head.appendChild(style);
+				document.head.appendChild(style);
+			}
 		    document.body.appendChild(modal);
 
 			let allColumns = [
@@ -738,7 +766,8 @@ function formatTime(totalSeconds) {
 		        enableCellNavigation: true,
 		        enableColumnReorder: true,
 		        enableSorting: true,
-		        forceFitColumns: true
+		        forceFitColumns: true,
+				autoHeight: true
 		    };
 
 		    var data = results.map(item => {
@@ -765,23 +794,43 @@ function formatTime(totalSeconds) {
 		    var grid = new Slick.Grid("#gridContainer", data, columns, options);
 
 			let recommendedMode = null;
+			let aiAlreadySelected = false;
+
+			const applyRecommendedHighlight = () => {
+				grid.removeCellCssStyles("iaRecommendedRow");
+				if (!recommendedMode) return;
+				const recommendedIndex = data.findIndex(item => item.route !== "-" && item.route.mode === recommendedMode);
+				if (recommendedIndex < 0) return;
+				grid.setCellCssStyles("iaRecommendedRow", {
+					[recommendedIndex]: {
+						mode: "ia-recommended-cell--mode",
+						distance: "ia-recommended-cell",
+						time: "ia-recommended-cell",
+						co2: "ia-recommended-cell",
+						detail: "ia-recommended-cell",
+						ruta: "ia-recommended-cell"
+					}
+				});
+			};
 
 			removeFloatingAiButton();
 			const askAiButton = document.createElement("button");
 			askAiButton.id = "askAiFloatingButton";
-			askAiButton.textContent = `🤖 ${t("ia_preguntar")}`;
-			askAiButton.style = "position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#2563eb;color:white;border:none;border-radius:9999px;padding:12px 18px;cursor:pointer;z-index:10025;box-shadow:0 8px 22px rgba(37,99,235,0.35);";
+			askAiButton.textContent = t("ia_preguntar");
+			askAiButton.style = "position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:linear-gradient(135deg,#10b981 0%,#2563eb 100%);color:white;border:none;border-radius:9999px;padding:12px 20px;cursor:pointer;z-index:10025;box-shadow:0 10px 24px rgba(37,99,235,0.35);font-weight:700;letter-spacing:0.2px;";
 
 			askAiButton.onclick = async () => {
+				if (aiAlreadySelected) return;
 				askAiButton.disabled = true;
-				askAiButton.textContent = `🤖 ${t("ia_cargando")}`;
+				askAiButton.textContent = t("ia_cargando");
 				const aiRecommendation = await requestAiTransportRecommendation(results);
 				askAiButton.disabled = false;
 
 				if (!aiRecommendation || !aiRecommendation.recommendedMode) {
-					askAiButton.textContent = `🤖 ${t("ia_error")}`;
+					askAiButton.textContent = t("ia_error");
+					showAiRecommendationBubble({ reason: t("ia_error") }, t("ia_recomendacion"), null);
 					setTimeout(() => {
-						askAiButton.textContent = `🤖 ${t("ia_preguntar")}`;
+						askAiButton.textContent = t("ia_preguntar");
 					}, 1800);
 					return;
 				}
@@ -789,20 +838,9 @@ function formatTime(totalSeconds) {
 				recommendedMode = aiRecommendation.recommendedMode;
 				const translatedMode = modeTranslations[idiomaActual][recommendedMode] || recommendedMode;
 
-				grid.removeCellCssStyles("iaRecommendedRow");
-				const recommendedIndex = data.findIndex(item => item.route !== "-" && item.route.mode === recommendedMode);
-				if (recommendedIndex >= 0) {
-					grid.setCellCssStyles("iaRecommendedRow", {
-						[recommendedIndex]: {
-							mode: "background: #dcfce7; font-weight: bold;",
-							distance: "background: #dcfce7;",
-							time: "background: #dcfce7;",
-							co2: "background: #dcfce7;",
-							detail: "background: #dcfce7;",
-							ruta: "background: #dcfce7;"
-						}
-					});
-				}
+				applyRecommendedHighlight();
+				aiAlreadySelected = true;
+				askAiButton.remove();
 
 				showAiRecommendationBubble(aiRecommendation, translatedMode, () => {
 					if (!recommendedMode) return;
@@ -814,7 +852,7 @@ function formatTime(totalSeconds) {
 					drawRecommendedRoute(recommendedMode);
 				});
 
-				askAiButton.textContent = `🤖 ${t("ia_preguntar")}`;
+				askAiButton.textContent = t("ia_preguntar");
 			};
 			document.body.appendChild(askAiButton);
 
@@ -845,6 +883,7 @@ function formatTime(totalSeconds) {
 
 		        grid.setData(data);
 		        grid.render();
+				applyRecommendedHighlight();
 		    });
 
 			// Obtener referencia al botón
@@ -879,7 +918,7 @@ function formatTime(totalSeconds) {
 
 			    // Agregar el nuevo modal
 			    document.body.appendChild(modal);
-			    if (!document.getElementById("askAiFloatingButton")) {
+			    if (!aiAlreadySelected && !document.getElementById("askAiFloatingButton")) {
 					document.body.appendChild(askAiButton);
 			    }
 
