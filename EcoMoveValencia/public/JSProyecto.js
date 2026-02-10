@@ -515,7 +515,69 @@ function formatTime(totalSeconds) {
 
 		
 		
-		function renderComparisonSlickGrid(results) {
+		async function requestAiTransportRecommendation(results) {
+			const validCandidates = results
+				.filter(item => !item.error && Number.isFinite(item.totalDistance) && Number.isFinite(item.totalTime))
+				.map(item => ({
+					mode: item.mode,
+					totalDistance: item.totalDistance,
+					totalTime: item.totalTime,
+					co2: Number.isFinite(item.co2) ? item.co2 : 0
+				}));
+
+			if (validCandidates.length === 0) return null;
+
+			try {
+				const response = await fetch('/api/recommend-transport', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						context: 'Seleccionar el mejor transporte entre origen y destino en Valencia.',
+						candidates: validCandidates
+					})
+				});
+
+				if (!response.ok) {
+					const errorText = await response.text();
+					console.warn('No se pudo obtener recomendación IA:', errorText);
+					return null;
+				}
+
+				return await response.json();
+			} catch (error) {
+				console.warn('Error al solicitar recomendación IA:', error);
+				return null;
+			}
+		}
+
+		function drawRecommendedRoute(modoNormalizado) {
+			if (modoNormalizado === "Valenbisi") {
+				muestraRutaValenbisi();
+			} else if (modoNormalizado === "METRO") {
+				muestraRutaMetroValencia();
+			} else if (modoNormalizado === "TAXI" || modoNormalizado === "Taxi") {
+				muestraRutaTaxi();
+			} else if (modoNormalizado === "BUS") {
+				muestraRutaEMTValencia();
+			} else if (modoNormalizado === "PATINETE") {
+				muestraRutaPatinete();
+			} else if (modoNormalizado === "TRAIN") {
+				muestraRutaRodalia();
+			} else if (["ELECTRIC_CAR", "DIESEL_CAR", "GASOLINE_CAR", "COMBUSTION_MOTORBIKE", "COCHE_HIBRIDO", "COCHE_DE_HIDROGENO", "CAMION"].includes(modoNormalizado)) {
+				transportMode = "DRIVING";
+				muestraRutaTipica(modoNormalizado);
+			} else if (["ELECTRIC_MOTORBIKE", "CICLOMOTOR"].includes(modoNormalizado)) {
+				muestraRutaELECTRIC_MOTORBIKE(modoNormalizado);
+			} else if (modoNormalizado === "WALKING") {
+				transportMode = "WALKING";
+				muestraRutaTipica(modoNormalizado);
+			} else if (modoNormalizado === "BICYCLING") {
+				transportMode = "BICYCLING";
+				muestraRutaTipica(modoNormalizado);
+			}
+		}
+
+		async function renderComparisonSlickGrid(results) {
 		    let modal = document.createElement("div");
 		    modal.id = "comparisonModal";
 		    modal.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;";
@@ -622,6 +684,40 @@ function formatTime(totalSeconds) {
 
 		    var grid = new Slick.Grid("#gridContainer", data, columns, options);
 
+			const aiRecommendation = await requestAiTransportRecommendation(results);
+			if (aiRecommendation && aiRecommendation.recommendedMode) {
+				const recommendedMode = aiRecommendation.recommendedMode;
+				const translatedMode = modeTranslations[idiomaActual][recommendedMode] || recommendedMode;
+				const aiBanner = document.createElement("div");
+				aiBanner.style = "position:absolute;left:20px;right:55px;top:10px;background:#ecfdf5;border:1px solid #10b981;color:#065f46;padding:10px 12px;border-radius:8px;font-size:14px;";
+				aiBanner.innerHTML = `<strong>🤖 IA:</strong> ${t("ia_recomendacion")} <strong>${translatedMode}</strong>. ${aiRecommendation.reason || ""}`;
+				modalContent.appendChild(aiBanner);
+
+				const recommendedIndex = data.findIndex(item => item.route !== "-" && item.route.mode === recommendedMode);
+				if (recommendedIndex >= 0) {
+					grid.setCellCssStyles("iaRecommendedRow", {
+						[recommendedIndex]: {
+							mode: "background: #dcfce7; font-weight: bold;",
+							distance: "background: #dcfce7;",
+							time: "background: #dcfce7;",
+							co2: "background: #dcfce7;",
+							detail: "background: #dcfce7;",
+							ruta: "background: #dcfce7;"
+						}
+					});
+				}
+
+				const aiRouteButton = document.createElement("button");
+				aiRouteButton.textContent = `🤖 ${t("ia_ver_ruta")}`;
+				aiRouteButton.style = "position:absolute;bottom:20px;right:20px;background:#10b981;color:white;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;";
+				aiRouteButton.onclick = () => {
+					document.body.removeChild(modal);
+					document.getElementById("btnMostrarModal").style.display = "block";
+					drawRecommendedRoute(recommendedMode);
+				};
+				modalContent.appendChild(aiRouteButton);
+			}
+
 		    grid.onSort.subscribe((e, args) => {
 		        let field = args.sortCol.field;
 		        let isAscending = args.sortAsc;
@@ -666,30 +762,7 @@ function formatTime(totalSeconds) {
 
 					console.log(modoNormalizado);
 					
-					   if (modoNormalizado === "Valenbisi") {
-					     muestraRutaValenbisi();
-					   } else if (modoNormalizado === "METRO") {
-					 	muestraRutaMetroValencia();
-					 	} else if (modoNormalizado === "Taxi") {
-						 muestraRutaTaxi();
-						} else if (modoNormalizado === "BUS") {
-					     muestraRutaEMTValencia();
-					   } else if (modoNormalizado === "PATINETE") {
-					     muestraRutaPatinete();
-					   } else if (modoNormalizado === "TRAIN") {
-					     muestraRutaRodalia();
-					   }else if (["ELECTRIC_CAR", "DIESEL_CAR", "GASOLINE_CAR", "COMBUSTION_MOTORBIKE", "COCHE_HIBRIDO", "COCHE_DE_HIDROGENO", "CAMION"].includes(modoNormalizado)) {
-						transportMode = "DRIVING"; 
-						muestraRutaTipica(modoNormalizado);
-					   } else if (["ELECTRIC_MOTORBIKE", "CICLOMOTOR"].includes(modoNormalizado)) {
-						muestraRutaELECTRIC_MOTORBIKE(modoNormalizado);
-						} else if (modoNormalizado === "WALKING") {
-					     transportMode = "WALKING";
-					     muestraRutaTipica(modoNormalizado);
-					   } else if (modoNormalizado === "BICYCLING") {
-					     transportMode = "BICYCLING";
-					     muestraRutaTipica(modoNormalizado);
-					   }
+					drawRecommendedRoute(modoNormalizado);
 			    }
 				
 			});
