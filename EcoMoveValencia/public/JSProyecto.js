@@ -551,32 +551,92 @@ function formatTime(totalSeconds) {
 		}
 
 
-		function showAiRecommendationBubble(aiRecommendation, translatedMode) {
+		function removeFloatingAiButton() {
+			const existing = document.getElementById("askAiFloatingButton");
+			if (existing) existing.remove();
+		}
+
+		function showAiRecommendationBubble(aiRecommendation, translatedMode, onRouteClick) {
 			const existing = document.getElementById("aiRecommendationModal");
 			if (existing) existing.remove();
 
 			const modal = document.createElement("div");
 			modal.id = "aiRecommendationModal";
-			modal.style = "position:fixed;inset:0;background:rgba(15,23,42,0.45);display:flex;align-items:center;justify-content:center;z-index:10020;";
+			modal.style = "position:fixed;inset:0;background:rgba(15,23,42,0.52);display:flex;align-items:center;justify-content:center;z-index:10030;padding:16px;";
 
 			const card = document.createElement("div");
-			card.style = "position:relative;background:#ffffff;border-radius:16px;padding:18px 18px 14px 18px;max-width:min(92vw,620px);box-shadow:0 14px 38px rgba(2,6,23,0.25);";
-
-			const bubble = document.createElement("div");
-			bubble.style = "position:relative;background:#e0f2fe;border:1px solid #7dd3fc;color:#0c4a6e;border-radius:14px;padding:14px 14px 12px 14px;line-height:1.4;";
-			bubble.innerHTML = `<div style="font-weight:700;margin-bottom:6px;">🤖 ${t("ia_recomendacion")}: ${translatedMode}</div><div>${aiRecommendation.reason || t("ia_error")}</div>`;
-
-			const tail = document.createElement("div");
-			tail.style = "position:absolute;left:24px;bottom:-10px;width:18px;height:18px;background:#e0f2fe;border-right:1px solid #7dd3fc;border-bottom:1px solid #7dd3fc;transform:rotate(45deg);";
-			bubble.appendChild(tail);
+			card.style = "position:relative;background:#ffffff;border-radius:16px;padding:16px;max-width:min(94vw,700px);width:100%;box-shadow:0 14px 38px rgba(2,6,23,0.25);";
 
 			const closeButton = document.createElement("button");
-			closeButton.textContent = "Entendido";
-			closeButton.style = "margin-top:16px;background:#2563eb;color:#fff;border:none;border-radius:10px;padding:8px 12px;cursor:pointer;float:right;";
-			closeButton.onclick = () => modal.remove();
+			closeButton.textContent = "✖";
+			closeButton.style = "position:absolute;right:12px;top:8px;background:transparent;border:none;font-size:20px;cursor:pointer;color:#111827;";
 
-			card.appendChild(bubble);
+			const content = document.createElement("div");
+			content.style = "display:flex;align-items:flex-end;gap:12px;padding-top:22px;";
+
+			const robotAvatar = document.createElement("div");
+			robotAvatar.style = "width:72px;height:72px;min-width:72px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:38px;box-shadow:0 4px 12px rgba(30,64,175,0.15);";
+			robotAvatar.textContent = "🤖";
+
+			const bubble = document.createElement("div");
+			bubble.style = "position:relative;flex:1;background:#eff6ff;border:1px solid #93c5fd;color:#1e3a8a;border-radius:14px;padding:14px;line-height:1.45;min-height:120px;";
+
+			const bubbleTitle = document.createElement("div");
+			bubbleTitle.style = "font-weight:700;margin-bottom:6px;";
+			bubbleTitle.textContent = `🤖 ${t("ia_recomendacion")}: ${translatedMode}`;
+
+			const bubbleReason = document.createElement("div");
+			const fullReason = aiRecommendation.reason || t("ia_error");
+
+			const tail = document.createElement("div");
+			tail.style = "position:absolute;left:-9px;bottom:16px;width:18px;height:18px;background:#eff6ff;border-left:1px solid #93c5fd;border-bottom:1px solid #93c5fd;transform:rotate(45deg);";
+
+			bubble.appendChild(bubbleTitle);
+			bubble.appendChild(bubbleReason);
+			bubble.appendChild(tail);
+
+			content.appendChild(robotAvatar);
+			content.appendChild(bubble);
+
+			const modalActions = document.createElement("div");
+			modalActions.style = "display:flex;justify-content:flex-end;gap:10px;margin-top:14px;";
+
+			const understoodButton = document.createElement("button");
+			understoodButton.textContent = "Entendido";
+			understoodButton.style = "background:#e5e7eb;color:#111827;border:none;border-radius:10px;padding:8px 12px;cursor:pointer;";
+
+			const routeButton = document.createElement("button");
+			routeButton.textContent = `🤖 ${t("ia_ver_ruta")}`;
+			routeButton.style = "background:#10b981;color:#fff;border:none;border-radius:10px;padding:8px 12px;cursor:pointer;display:none;";
+
+			let typingIndex = 0;
+			const typingTimer = setInterval(() => {
+				typingIndex += 1;
+				bubbleReason.textContent = fullReason.slice(0, typingIndex);
+				if (typingIndex >= fullReason.length) {
+					clearInterval(typingTimer);
+					routeButton.style.display = "inline-block";
+				}
+			}, 18);
+
+			const closeModal = () => {
+				clearInterval(typingTimer);
+				modal.remove();
+			};
+
+			routeButton.onclick = () => {
+				if (typeof onRouteClick === "function") onRouteClick();
+				closeModal();
+			};
+
+			closeButton.onclick = closeModal;
+			understoodButton.onclick = closeModal;
+
+			modalActions.appendChild(understoodButton);
+			modalActions.appendChild(routeButton);
 			card.appendChild(closeButton);
+			card.appendChild(content);
+			card.appendChild(modalActions);
 			modal.appendChild(card);
 			document.body.appendChild(modal);
 		}
@@ -622,7 +682,12 @@ function formatTime(totalSeconds) {
 		    closeButton.style = "position: absolute; top: 10px; right: 10px; border: none; background: transparent; font-size: 20px; cursor: pointer; color: #000;";
 		    closeButton.onmouseover = () => closeButton.style.color = "red";
 		    closeButton.onmouseout = () => closeButton.style.color = "#000";
-		    closeButton.onclick = () => document.body.removeChild(modal);
+		    closeButton.onclick = () => {
+				if (document.body.contains(modal)) document.body.removeChild(modal);
+				removeFloatingAiButton();
+				const aiModal = document.getElementById("aiRecommendationModal");
+				if (aiModal) aiModal.remove();
+			};
 		    modalContent.appendChild(closeButton);
 
 		    let gridContainer = document.createElement("div");
@@ -700,25 +765,13 @@ function formatTime(totalSeconds) {
 		    var grid = new Slick.Grid("#gridContainer", data, columns, options);
 
 			let recommendedMode = null;
-			const aiBanner = document.createElement("div");
-			aiBanner.style = "position:absolute;left:20px;right:55px;top:10px;background:#ecfdf5;border:1px solid #10b981;color:#065f46;padding:10px 12px;border-radius:8px;font-size:14px;display:none;";
-			modalContent.appendChild(aiBanner);
 
-			const aiRouteButton = document.createElement("button");
-			aiRouteButton.textContent = `🤖 ${t("ia_ver_ruta")}`;
-			aiRouteButton.style = "position:absolute;bottom:20px;right:20px;background:#10b981;color:white;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;display:none;";
-			aiRouteButton.onclick = () => {
-				if (!recommendedMode) return;
-				document.body.removeChild(modal);
-				document.getElementById("btnMostrarModal").style.display = "block";
-				drawRecommendedRoute(recommendedMode);
-			};
-			modalContent.appendChild(aiRouteButton);
-
-
+			removeFloatingAiButton();
 			const askAiButton = document.createElement("button");
+			askAiButton.id = "askAiFloatingButton";
 			askAiButton.textContent = `🤖 ${t("ia_preguntar")}`;
-			askAiButton.style = "position:absolute;bottom:20px;right:20px;background:#2563eb;color:white;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;";
+			askAiButton.style = "position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#2563eb;color:white;border:none;border-radius:9999px;padding:12px 18px;cursor:pointer;z-index:10025;box-shadow:0 8px 22px rgba(37,99,235,0.35);";
+
 			askAiButton.onclick = async () => {
 				askAiButton.disabled = true;
 				askAiButton.textContent = `🤖 ${t("ia_cargando")}`;
@@ -726,16 +779,15 @@ function formatTime(totalSeconds) {
 				askAiButton.disabled = false;
 
 				if (!aiRecommendation || !aiRecommendation.recommendedMode) {
-					aiBanner.style.display = "block";
-					aiBanner.innerHTML = `<strong>🤖 IA:</strong> ${t("ia_error")}`;
+					askAiButton.textContent = `🤖 ${t("ia_error")}`;
+					setTimeout(() => {
+						askAiButton.textContent = `🤖 ${t("ia_preguntar")}`;
+					}, 1800);
 					return;
 				}
 
-
 				recommendedMode = aiRecommendation.recommendedMode;
 				const translatedMode = modeTranslations[idiomaActual][recommendedMode] || recommendedMode;
-				aiBanner.style.display = "block";
-				aiBanner.innerHTML = `<strong>🤖 IA:</strong> ${t("ia_recomendacion")} <strong>${translatedMode}</strong>. ${aiRecommendation.reason || ""}`;
 
 				grid.removeCellCssStyles("iaRecommendedRow");
 				const recommendedIndex = data.findIndex(item => item.route !== "-" && item.route.mode === recommendedMode);
@@ -752,10 +804,19 @@ function formatTime(totalSeconds) {
 					});
 				}
 
-				askAiButton.style.display = "none";
-				aiRouteButton.style.display = "inline-block";
+				showAiRecommendationBubble(aiRecommendation, translatedMode, () => {
+					if (!recommendedMode) return;
+					if (document.body.contains(modal)) {
+						document.body.removeChild(modal);
+					}
+					document.getElementById("btnMostrarModal").style.display = "block";
+					removeFloatingAiButton();
+					drawRecommendedRoute(recommendedMode);
+				});
+
+				askAiButton.textContent = `🤖 ${t("ia_preguntar")}`;
 			};
-			modalContent.appendChild(askAiButton);
+			document.body.appendChild(askAiButton);
 
 
 		    grid.onSort.subscribe((e, args) => {
@@ -793,7 +854,8 @@ function formatTime(totalSeconds) {
 			    let item = data[args.row];
 			    if (args.cell === grid.getColumnIndex("ruta") && item.route !== "-") {
 			        // Eliminar el modal
-			        document.body.removeChild(modal);
+			        if (document.body.contains(modal)) document.body.removeChild(modal);
+			        removeFloatingAiButton();
 
 			        // Mostrar el botón para volver a abrir el modal
 			        btnMostrarModal.style.display = "block";
@@ -817,6 +879,9 @@ function formatTime(totalSeconds) {
 
 			    // Agregar el nuevo modal
 			    document.body.appendChild(modal);
+			    if (!document.getElementById("askAiFloatingButton")) {
+					document.body.appendChild(askAiButton);
+			    }
 
 			    let modalDerecha = document.getElementById("googleMapsModal");
 			    modalDerecha.style.display = "none";
@@ -1866,7 +1931,12 @@ function muestraRutaDesdeTabla(respuesta){
 		    closeButton.style.color = "#666";
 		    closeButton.onmouseover = () => closeButton.style.color = "#d00";
 		    closeButton.onmouseout = () => closeButton.style.color = "#666";
-		    closeButton.onclick = () => document.body.removeChild(modal);
+		    closeButton.onclick = () => {
+				if (document.body.contains(modal)) document.body.removeChild(modal);
+				removeFloatingAiButton();
+				const aiModal = document.getElementById("aiRecommendationModal");
+				if (aiModal) aiModal.remove();
+			};
 
 		    // Ensamblar el modal
 		    modalContent.appendChild(icono);
