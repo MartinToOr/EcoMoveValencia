@@ -684,6 +684,44 @@ function formatTime(totalSeconds) {
 
 		    var grid = new Slick.Grid("#gridContainer", data, columns, options);
 
+			let recommendedMode = null;
+			const aiBanner = document.createElement("div");
+			aiBanner.style = "position:absolute;left:20px;right:55px;top:10px;background:#ecfdf5;border:1px solid #10b981;color:#065f46;padding:10px 12px;border-radius:8px;font-size:14px;display:none;";
+			modalContent.appendChild(aiBanner);
+
+			const aiRouteButton = document.createElement("button");
+			aiRouteButton.textContent = `🤖 ${t("ia_ver_ruta")}`;
+			aiRouteButton.style = "position:absolute;bottom:20px;right:20px;background:#10b981;color:white;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;display:none;";
+			aiRouteButton.onclick = () => {
+				if (!recommendedMode) return;
+				document.body.removeChild(modal);
+				document.getElementById("btnMostrarModal").style.display = "block";
+				drawRecommendedRoute(recommendedMode);
+			};
+			modalContent.appendChild(aiRouteButton);
+
+			const askAiButton = document.createElement("button");
+			askAiButton.textContent = `🤖 ${t("ia_preguntar")}`;
+			askAiButton.style = "position:absolute;bottom:20px;right:20px;background:#2563eb;color:white;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;";
+			askAiButton.onclick = async () => {
+				askAiButton.disabled = true;
+				askAiButton.textContent = `🤖 ${t("ia_cargando")}`;
+				const aiRecommendation = await requestAiTransportRecommendation(results);
+				askAiButton.disabled = false;
+
+				if (!aiRecommendation || !aiRecommendation.recommendedMode) {
+					aiBanner.style.display = "block";
+					aiBanner.innerHTML = `<strong>🤖 IA:</strong> ${t("ia_error")}`;
+					askAiButton.textContent = `🤖 ${t("ia_preguntar")}`;
+					return;
+				}
+
+				recommendedMode = aiRecommendation.recommendedMode;
+				const translatedMode = modeTranslations[idiomaActual][recommendedMode] || recommendedMode;
+				aiBanner.style.display = "block";
+				aiBanner.innerHTML = `<strong>🤖 IA:</strong> ${t("ia_recomendacion")} <strong>${translatedMode}</strong>. ${aiRecommendation.reason || ""}`;
+
+				grid.removeCellCssStyles("iaRecommendedRow");
 			const aiRecommendation = await requestAiTransportRecommendation(results);
 			if (aiRecommendation && aiRecommendation.recommendedMode) {
 				const recommendedMode = aiRecommendation.recommendedMode;
@@ -707,6 +745,10 @@ function formatTime(totalSeconds) {
 					});
 				}
 
+				askAiButton.style.display = "none";
+				aiRouteButton.style.display = "inline-block";
+			};
+			modalContent.appendChild(askAiButton);
 				const aiRouteButton = document.createElement("button");
 				aiRouteButton.textContent = `🤖 ${t("ia_ver_ruta")}`;
 				aiRouteButton.style = "position:absolute;bottom:20px;right:20px;background:#10b981;color:white;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;";
