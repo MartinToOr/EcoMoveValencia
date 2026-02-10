@@ -394,6 +394,7 @@ app.post('/api/recommend-transport', async (req, res) => {
         return scored[0]?.candidate || pool[0] || candidates[0];
     };
 
+
     const buildFallbackReason = (recommendedCandidate) => {
         if (responseLanguage === 'en') {
             return `I could not generate a dynamic AI explanation right now. The calculated recommended mode is ${recommendedCandidate.mode}.`;
@@ -504,6 +505,7 @@ Reglas:
                     distancia: empateDistancia.map(mode => ({ mode, modeLabel: labelByMode[mode] || mode }))
                 }
             };
+
 
             const openAiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',

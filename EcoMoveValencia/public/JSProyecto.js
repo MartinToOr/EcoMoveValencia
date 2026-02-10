@@ -641,6 +641,7 @@ function formatTime(totalSeconds) {
 				modal.remove();
 			};
 
+
 			routeButton.onclick = () => {
 				if (typeof onRouteClick === "function") onRouteClick();
 				closeModal();
@@ -739,6 +740,8 @@ function formatTime(totalSeconds) {
 			}
 		    document.body.appendChild(modal);
 
+
+
 			let allColumns = [
 			  { id: "mode", name: tt("modo"), field: "mode", width: 160, sortable: false },
 			  { id: "distance", name: tt("distancia"), field: "distance", width: 120, sortable: true },
@@ -769,6 +772,7 @@ function formatTime(totalSeconds) {
 		        forceFitColumns: true,
 				autoHeight: true
 		    };
+
 
 		    var data = results.map(item => {
 		        return item.error ? {
@@ -885,6 +889,7 @@ function formatTime(totalSeconds) {
 		        grid.render();
 				applyRecommendedHighlight();
 		    });
+
 
 			// Obtener referencia al botón
 			const btnMostrarModal = document.getElementById("btnMostrarModal");
