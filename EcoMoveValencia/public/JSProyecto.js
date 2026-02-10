@@ -550,6 +550,37 @@ function formatTime(totalSeconds) {
 			}
 		}
 
+
+		function showAiRecommendationBubble(aiRecommendation, translatedMode) {
+			const existing = document.getElementById("aiRecommendationModal");
+			if (existing) existing.remove();
+
+			const modal = document.createElement("div");
+			modal.id = "aiRecommendationModal";
+			modal.style = "position:fixed;inset:0;background:rgba(15,23,42,0.45);display:flex;align-items:center;justify-content:center;z-index:10020;";
+
+			const card = document.createElement("div");
+			card.style = "position:relative;background:#ffffff;border-radius:16px;padding:18px 18px 14px 18px;max-width:min(92vw,620px);box-shadow:0 14px 38px rgba(2,6,23,0.25);";
+
+			const bubble = document.createElement("div");
+			bubble.style = "position:relative;background:#e0f2fe;border:1px solid #7dd3fc;color:#0c4a6e;border-radius:14px;padding:14px 14px 12px 14px;line-height:1.4;";
+			bubble.innerHTML = `<div style="font-weight:700;margin-bottom:6px;">🤖 ${t("ia_recomendacion")}: ${translatedMode}</div><div>${aiRecommendation.reason || t("ia_error")}</div>`;
+
+			const tail = document.createElement("div");
+			tail.style = "position:absolute;left:24px;bottom:-10px;width:18px;height:18px;background:#e0f2fe;border-right:1px solid #7dd3fc;border-bottom:1px solid #7dd3fc;transform:rotate(45deg);";
+			bubble.appendChild(tail);
+
+			const closeButton = document.createElement("button");
+			closeButton.textContent = "Entendido";
+			closeButton.style = "margin-top:16px;background:#2563eb;color:#fff;border:none;border-radius:10px;padding:8px 12px;cursor:pointer;float:right;";
+			closeButton.onclick = () => modal.remove();
+
+			card.appendChild(bubble);
+			card.appendChild(closeButton);
+			modal.appendChild(card);
+			document.body.appendChild(modal);
+		}
+
 		function drawRecommendedRoute(modoNormalizado) {
 			if (modoNormalizado === "Valenbisi") {
 				muestraRutaValenbisi();
@@ -583,24 +614,8 @@ function formatTime(totalSeconds) {
 		    modal.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;";
 
 		    let modalContent = document.createElement("div");
-			
-			if (window.innerWidth <= 768) {
-				modalContent.style.width = "700px";
-				modalContent.style.height = "470px";
-				modalContent.style.padding = "20px";
-				modalContent.style.borderRadius = "8px";
-				modalContent.style.fontSize = "16px";
-
-
-			} else {
-			  modalContent.style.width = "1300px";
-			  modalContent.style.height = "530px";
-			  modalContent.style.padding = "20px";
-			  modalContent.style.borderRadius = "8px";
-			  modalContent.style.fontSize = "16px";
-			}
-
-		    modalContent.style = "background-color: #fff; padding: 20px; border-radius: 8px; width: 1300px; height: 530px; position: relative;";
+			const isMobile = window.innerWidth <= 768;
+			modalContent.style = `background-color:#fff;padding:20px;border-radius:8px;position:relative;box-sizing:border-box;width:${isMobile ? "95vw" : "1300px"};height:${isMobile ? "78vh" : "530px"};max-height:90vh;`;
 
 		    let closeButton = document.createElement("button");
 		    closeButton.textContent = "✖";
@@ -612,7 +627,7 @@ function formatTime(totalSeconds) {
 
 		    let gridContainer = document.createElement("div");
 		    gridContainer.id = "gridContainer";
-		    gridContainer.style = "width: 100%; height: 100%; top: 20px;";
+		    gridContainer.style = "width:100%;height:calc(100% - 120px);margin-top:40px;";
 		    modalContent.appendChild(gridContainer);
 
 		    modal.appendChild(modalContent);
@@ -700,6 +715,7 @@ function formatTime(totalSeconds) {
 			};
 			modalContent.appendChild(aiRouteButton);
 
+
 			const askAiButton = document.createElement("button");
 			askAiButton.textContent = `🤖 ${t("ia_preguntar")}`;
 			askAiButton.style = "position:absolute;bottom:20px;right:20px;background:#2563eb;color:white;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;";
@@ -712,9 +728,9 @@ function formatTime(totalSeconds) {
 				if (!aiRecommendation || !aiRecommendation.recommendedMode) {
 					aiBanner.style.display = "block";
 					aiBanner.innerHTML = `<strong>🤖 IA:</strong> ${t("ia_error")}`;
-					askAiButton.textContent = `🤖 ${t("ia_preguntar")}`;
 					return;
 				}
+
 
 				recommendedMode = aiRecommendation.recommendedMode;
 				const translatedMode = modeTranslations[idiomaActual][recommendedMode] || recommendedMode;
@@ -740,6 +756,7 @@ function formatTime(totalSeconds) {
 				aiRouteButton.style.display = "inline-block";
 			};
 			modalContent.appendChild(askAiButton);
+
 
 		    grid.onSort.subscribe((e, args) => {
 		        let field = args.sortCol.field;
