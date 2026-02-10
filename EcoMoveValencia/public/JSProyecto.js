@@ -722,6 +722,15 @@ function formatTime(totalSeconds) {
 				aiBanner.innerHTML = `<strong>🤖 IA:</strong> ${t("ia_recomendacion")} <strong>${translatedMode}</strong>. ${aiRecommendation.reason || ""}`;
 
 				grid.removeCellCssStyles("iaRecommendedRow");
+			const aiRecommendation = await requestAiTransportRecommendation(results);
+			if (aiRecommendation && aiRecommendation.recommendedMode) {
+				const recommendedMode = aiRecommendation.recommendedMode;
+				const translatedMode = modeTranslations[idiomaActual][recommendedMode] || recommendedMode;
+				const aiBanner = document.createElement("div");
+				aiBanner.style = "position:absolute;left:20px;right:55px;top:10px;background:#ecfdf5;border:1px solid #10b981;color:#065f46;padding:10px 12px;border-radius:8px;font-size:14px;";
+				aiBanner.innerHTML = `<strong>🤖 IA:</strong> ${t("ia_recomendacion")} <strong>${translatedMode}</strong>. ${aiRecommendation.reason || ""}`;
+				modalContent.appendChild(aiBanner);
+
 				const recommendedIndex = data.findIndex(item => item.route !== "-" && item.route.mode === recommendedMode);
 				if (recommendedIndex >= 0) {
 					grid.setCellCssStyles("iaRecommendedRow", {
@@ -740,6 +749,16 @@ function formatTime(totalSeconds) {
 				aiRouteButton.style.display = "inline-block";
 			};
 			modalContent.appendChild(askAiButton);
+				const aiRouteButton = document.createElement("button");
+				aiRouteButton.textContent = `🤖 ${t("ia_ver_ruta")}`;
+				aiRouteButton.style = "position:absolute;bottom:20px;right:20px;background:#10b981;color:white;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;";
+				aiRouteButton.onclick = () => {
+					document.body.removeChild(modal);
+					document.getElementById("btnMostrarModal").style.display = "block";
+					drawRecommendedRoute(recommendedMode);
+				};
+				modalContent.appendChild(aiRouteButton);
+			}
 
 		    grid.onSort.subscribe((e, args) => {
 		        let field = args.sortCol.field;
