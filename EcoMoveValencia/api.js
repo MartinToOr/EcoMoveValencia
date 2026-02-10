@@ -17,6 +17,8 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 3000;
+const openAiApiKey = process.env.OPENAI_API_KEY || "";
+const openAiModel = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
 
 
@@ -298,6 +300,95 @@ app.get("/rutaMotoElectrica", async (req, res) => {
     } catch (error) {
         console.error("Error al obtener la ruta:", error);
         res.status(500).json({ error: "Error interno del servidor" });
+    }
+});
+
+app.post('/api/recommend-transport', async (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+
+    if (!openAiApiKey) {
+        return res.status(503).json({
+            error: 'OPENAI_API_KEY no configurada en el servidor. Añádela en tu archivo .env.'
+        });
+    }
+
+    const rawCandidates = Array.isArray(req.body?.candidates) ? req.body.candidates : [];
+    const userContext = typeof req.body?.context === 'string' ? req.body.context.trim() : '';
+
+    const candidates = rawCandidates
+        .filter(candidate => candidate && !candidate.error && Number.isFinite(candidate.totalDistance) && Number.isFinite(candidate.totalTime))
+        .map(candidate => ({
+            mode: candidate.mode,
+            totalDistance: candidate.totalDistance,
+            totalTime: candidate.totalTime,
+            co2: Number.isFinite(candidate.co2) ? candidate.co2 : 0
+        }));
+
+    if (candidates.length === 0) {
+        return res.status(400).json({ error: 'No hay candidatas válidas para recomendar.' });
+    }
+
+    const systemPrompt = `Eres un asistente de movilidad sostenible de Valencia. Tu objetivo es elegir el mejor transporte equilibrando: emisiones CO2 (prioridad alta), tiempo de viaje y distancia total. Devuelve SIEMPRE JSON válido con este formato exacto: {"recommendedMode":"MODO","reason":"justificación breve en español"}. El campo recommendedMode debe coincidir exactamente con uno de los modos recibidos.`;
+
+    const userPrompt = {
+        ciudad: 'Valencia',
+        contextoUsuario: userContext || 'Sin contexto adicional',
+        criterios: 'Prioriza sostenibilidad, después tiempo de viaje y por último distancia.',
+        candidatos: candidates
+    };
+
+    try {
+        const openAiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${openAiApiKey}`
+            },
+            body: JSON.stringify({
+                model: openAiModel,
+                temperature: 0.1,
+                response_format: { type: 'json_object' },
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: JSON.stringify(userPrompt) }
+                ]
+            })
+        });
+
+        if (!openAiResponse.ok) {
+            const errorText = await openAiResponse.text();
+            return res.status(502).json({ error: 'Error llamando a OpenAI', details: errorText });
+        }
+
+        const completion = await openAiResponse.json();
+        const content = completion?.choices?.[0]?.message?.content;
+
+        if (!content) {
+            return res.status(500).json({ error: 'OpenAI no devolvió contenido.' });
+        }
+
+        let parsed;
+        try {
+            parsed = JSON.parse(content);
+        } catch (parseError) {
+            return res.status(500).json({ error: 'Respuesta de OpenAI no es JSON válido.', details: content });
+        }
+
+        const recommendedMode = parsed?.recommendedMode;
+        const reason = parsed?.reason || 'Sin justificación proporcionada.';
+        const isValidMode = candidates.some(candidate => candidate.mode === recommendedMode);
+
+        if (!isValidMode) {
+            return res.status(500).json({
+                error: 'OpenAI recomendó un modo fuera de la lista de candidatos.',
+                details: parsed
+            });
+        }
+
+        return res.json({ recommendedMode, reason, candidatesCount: candidates.length });
+    } catch (error) {
+        console.error('Error en /api/recommend-transport:', error);
+        return res.status(500).json({ error: 'Error interno al recomendar transporte con IA.' });
     }
 });
 
