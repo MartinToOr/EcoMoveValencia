@@ -715,18 +715,27 @@ function formatTime(totalSeconds) {
 			};
 			modalContent.appendChild(aiRouteButton);
 
-			(async () => {
+
+			const askAiButton = document.createElement("button");
+			askAiButton.textContent = `🤖 ${t("ia_preguntar")}`;
+			askAiButton.style = "position:absolute;bottom:20px;right:20px;background:#2563eb;color:white;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;";
+			askAiButton.onclick = async () => {
+				askAiButton.disabled = true;
+				askAiButton.textContent = `🤖 ${t("ia_cargando")}`;
 				const aiRecommendation = await requestAiTransportRecommendation(results);
+				askAiButton.disabled = false;
+
 				if (!aiRecommendation || !aiRecommendation.recommendedMode) {
 					aiBanner.style.display = "block";
 					aiBanner.innerHTML = `<strong>🤖 IA:</strong> ${t("ia_error")}`;
 					return;
 				}
 
+
 				recommendedMode = aiRecommendation.recommendedMode;
 				const translatedMode = modeTranslations[idiomaActual][recommendedMode] || recommendedMode;
 				aiBanner.style.display = "block";
-				aiBanner.innerHTML = `<strong>🤖 IA:</strong> ${t("ia_recomendacion")} <strong>${translatedMode}</strong>`;
+				aiBanner.innerHTML = `<strong>🤖 IA:</strong> ${t("ia_recomendacion")} <strong>${translatedMode}</strong>. ${aiRecommendation.reason || ""}`;
 
 				grid.removeCellCssStyles("iaRecommendedRow");
 				const recommendedIndex = data.findIndex(item => item.route !== "-" && item.route.mode === recommendedMode);
@@ -743,9 +752,11 @@ function formatTime(totalSeconds) {
 					});
 				}
 
+				askAiButton.style.display = "none";
 				aiRouteButton.style.display = "inline-block";
-				showAiRecommendationBubble(aiRecommendation, translatedMode);
-			})();
+			};
+			modalContent.appendChild(askAiButton);
+
 
 		    grid.onSort.subscribe((e, args) => {
 		        let field = args.sortCol.field;
