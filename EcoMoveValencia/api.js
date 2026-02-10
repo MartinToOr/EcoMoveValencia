@@ -374,6 +374,19 @@ app.post('/api/recommend-transport', async (req, res) => {
                     score -= 0.05;
                 }
 
+                const isMicromobilityMode = ['BICYCLING', 'Valenbisi', 'PATINETE'].includes(candidate.mode);
+                if (isMicromobilityMode) {
+                    if (candidate.totalDistance > 13000) {
+                        score += 0.50;
+                    } else if (candidate.totalDistance > 10000) {
+                        score += 0.30;
+                    } else if (candidate.totalDistance > 7000) {
+                        score += 0.16;
+                    } else if (candidate.totalDistance > 6000) {
+                        score += 0.08;
+                    }
+                }
+
                 return { candidate, score };
             })
             .sort((a, b) => a.score - b.score);
@@ -397,6 +410,15 @@ app.post('/api/recommend-transport', async (req, res) => {
         const bestByTime = [...candidates].sort((a, b) => a.totalTime - b.totalTime)[0];
         const bestByCo2 = [...candidates].sort((a, b) => a.co2 - b.co2)[0];
         const bestByDistance = [...candidates].sort((a, b) => a.totalDistance - b.totalDistance)[0];
+        const publicTransportModes = ['BUS', 'METRO', 'TRAIN'];
+        const publicTransportCandidates = candidates.filter(candidate => publicTransportModes.includes(candidate.mode));
+        const bestPublicTransport = publicTransportCandidates.length
+            ? [...publicTransportCandidates].sort((a, b) => {
+                if (a.co2 !== b.co2) return a.co2 - b.co2;
+                if (a.totalTime !== b.totalTime) return a.totalTime - b.totalTime;
+                return a.totalDistance - b.totalDistance;
+            })[0]
+            : null;
 
         let reason = '';
 
@@ -437,7 +459,9 @@ Reglas:
 5) No inventes datos ni afirmes que una opción es "la mejor" en un criterio si hay empate.
 6) Responde estrictamente en este idioma: ${responseLanguage === 'en' ? 'English' : responseLanguage === 'val' ? 'valencià' : 'español'}.
 7) Usa modeLabel para nombrar los modos cuando exista.
-8) Nunca escribas el typo "BYCICLING".`;
+8) Nunca escribas el typo "BYCICLING".
+9) Para rutas largas (más de 6-7 km), evita sobrepriorizar micromovilidad (bici, Valenbisi, patinete) salvo que los datos lo justifiquen claramente.
+10) Cierra la explicación con una frase breve indicando si conviene transporte público y cuál sería la mejor alternativa de transporte público según los datos (si existe).`;
 
             const tieTolerance = 1e-9;
             const rankingTiempo = [...candidates]
@@ -473,6 +497,7 @@ Reglas:
                 rankingTiempo: rankingTiempo.map(toLabeledCandidate),
                 rankingEmisiones: rankingEmisiones.map(toLabeledCandidate),
                 rankingDistancia: rankingDistancia.map(toLabeledCandidate),
+                mejorTransportePublico: bestPublicTransport ? toLabeledCandidate(bestPublicTransport) : null,
                 empates: {
                     tiempo: empateTiempo.map(mode => ({ mode, modeLabel: labelByMode[mode] || mode })),
                     emisiones: empateEmisiones.map(mode => ({ mode, modeLabel: labelByMode[mode] || mode })),

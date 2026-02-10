@@ -610,7 +610,7 @@ function formatTime(totalSeconds) {
 			modalActions.style = "display:flex;justify-content:flex-end;gap:10px;margin-top:14px;";
 
 			const understoodButton = document.createElement("button");
-			understoodButton.textContent = "Entendido";
+			understoodButton.textContent = t("ia_entendido");
 			understoodButton.style = "background:#e5e7eb;color:#111827;border:none;border-radius:10px;padding:8px 12px;cursor:pointer;";
 
 			const routeButton = document.createElement("button");
