@@ -379,38 +379,66 @@ app.post('/api/recommend-transport', async (req, res) => {
         return scored[0]?.candidate || pool[0] || candidates[0];
     };
 
-    const buildFallbackReason = (recommendedCandidate, bestByTime, bestByCo2, bestByDistance) => {
-        const toMinutes = (seconds) => Math.round((seconds || 0) / 60);
-        const toKm = (meters) => ((meters || 0) / 1000).toFixed(1);
-
-        return `Recomiendo ${recommendedCandidate.mode} porque combina bien sostenibilidad y tiempo para este trayecto: ${toMinutes(recommendedCandidate.totalTime)} min, ${toKm(recommendedCandidate.totalDistance)} km y ${recommendedCandidate.co2.toFixed(1)} g CO2. Si priorizas tiempo, ${bestByTime.mode} tarda aprox. ${toMinutes(bestByTime.totalTime)} min. Si priorizas emisiones, ${bestByCo2.mode} ronda ${bestByCo2.co2.toFixed(1)} g CO2. Si priorizas distancia, ${bestByDistance.mode} recorre ${toKm(bestByDistance.totalDistance)} km.`;
+    const buildFallbackReason = (recommendedCandidate) => {
+        return `No he podido generar una explicación dinámica de IA en este momento. El modo recomendado calculado es ${recommendedCandidate.mode}.`;
     };
 
     try {
         const recommendedCandidate = pickRecommendedCandidate();
         const recommendedMode = recommendedCandidate.mode;
-        const toMinutes = (seconds) => Math.round((seconds || 0) / 60);
-        const toKm = (meters) => ((meters || 0) / 1000).toFixed(1);
         const bestByTime = [...candidates].sort((a, b) => a.totalTime - b.totalTime)[0];
         const bestByCo2 = [...candidates].sort((a, b) => a.co2 - b.co2)[0];
         const bestByDistance = [...candidates].sort((a, b) => a.totalDistance - b.totalDistance)[0];
 
-        let reason = buildFallbackReason(recommendedCandidate, bestByTime, bestByCo2, bestByDistance);
+        let reason = '';
 
         try {
             const systemPrompt = `Eres un asistente experto en movilidad sostenible de Valencia. Tu objetivo es explicar una recomendación ya decidida, sin cambiarla.
 Reglas:
 1) Devuelve SOLO JSON válido con: {"reason":"explicación en español"}.
 2) Debes defender el modo recomendado usando tiempo, distancia y CO2 exactos que recibes.
-3) La explicación debe ser clara, concisa y útil (máximo 4 frases).
-4) Incluye explícitamente: "Si priorizas tiempo..." y "Si priorizas emisiones...".`;
+3) Haz una reflexión comparativa fiel a los datos exactos (tiempo, distancia y CO2) e indica empates reales cuando existan.
+4) Evita plantillas rígidas o frases fijas; redacta una explicación natural y útil en máximo 4 frases.
+5) No inventes datos ni afirmes que una opción es "la mejor" en un criterio si hay empate.`;
+
+            const tieTolerance = 1e-9;
+            const rankingTiempo = [...candidates]
+                .sort((a, b) => a.totalTime - b.totalTime)
+                .slice(0, 5)
+                .map(candidate => ({ mode: candidate.mode, totalTime: candidate.totalTime, totalDistance: candidate.totalDistance, co2: candidate.co2 }));
+            const rankingEmisiones = [...candidates]
+                .sort((a, b) => a.co2 - b.co2)
+                .slice(0, 5)
+                .map(candidate => ({ mode: candidate.mode, totalTime: candidate.totalTime, totalDistance: candidate.totalDistance, co2: candidate.co2 }));
+            const rankingDistancia = [...candidates]
+                .sort((a, b) => a.totalDistance - b.totalDistance)
+                .slice(0, 5)
+                .map(candidate => ({ mode: candidate.mode, totalTime: candidate.totalTime, totalDistance: candidate.totalDistance, co2: candidate.co2 }));
+
+            const empateTiempo = candidates
+                .filter(candidate => Math.abs(candidate.totalTime - bestByTime.totalTime) <= tieTolerance)
+                .map(candidate => candidate.mode);
+            const empateEmisiones = candidates
+                .filter(candidate => Math.abs(candidate.co2 - bestByCo2.co2) <= tieTolerance)
+                .map(candidate => candidate.mode);
+            const empateDistancia = candidates
+                .filter(candidate => Math.abs(candidate.totalDistance - bestByDistance.totalDistance) <= tieTolerance)
+                .map(candidate => candidate.mode);
 
             const explanationPrompt = {
                 ...userPrompt,
                 modoRecomendadoFijo: recommendedCandidate,
                 mejorTiempo: bestByTime,
                 mejorEmisiones: bestByCo2,
-                mejorDistancia: bestByDistance
+                mejorDistancia: bestByDistance,
+                rankingTiempo,
+                rankingEmisiones,
+                rankingDistancia,
+                empates: {
+                    tiempo: empateTiempo,
+                    emisiones: empateEmisiones,
+                    distancia: empateDistancia
+                }
             };
 
             const openAiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -421,7 +449,7 @@ Reglas:
                 },
                 body: JSON.stringify({
                     model: openAiModel,
-                    temperature: 0.1,
+                    temperature: 0.7,
                     response_format: { type: 'json_object' },
                     messages: [
                         { role: 'system', content: systemPrompt },
@@ -444,14 +472,12 @@ Reglas:
             console.warn('No se pudo generar explicación con IA, usando fallback:', error.message);
         }
 
-        if (!reason.includes('Si priorizas tiempo')) {
-            reason = `${reason} Si priorizas tiempo, ${bestByTime.mode} tarda aprox. ${toMinutes(bestByTime.totalTime)} min para ${toKm(bestByTime.totalDistance)} km.`;
+        if (typeof reason !== 'string') {
+            reason = String(reason || '').trim();
         }
-        if (!reason.includes('Si priorizas emisiones')) {
-            reason = `${reason} Si priorizas emisiones, ${bestByCo2.mode} se mueve en torno a ${bestByCo2.co2.toFixed(1)} g CO2.`;
-        }
-        if (!reason.includes('Si priorizas distancia')) {
-            reason = `${reason} Si priorizas distancia, ${bestByDistance.mode} recorre unos ${toKm(bestByDistance.totalDistance)} km.`;
+
+        if (!reason) {
+            reason = buildFallbackReason(recommendedCandidate);
         }
 
         return res.json({ recommendedMode, reason, candidatesCount: candidates.length });
