@@ -713,11 +713,10 @@ function formatTime(totalSeconds) {
 
 		    modal.appendChild(modalContent);
 			
-			let style = document.getElementById("comparison-grid-style");
-			if (!style) {
-				style = document.createElement("style");
-				style.id = "comparison-grid-style";
-				style.textContent = `
+
+			const style = document.createElement("style");
+			style.textContent = `
+
 			    .slick-header-column {
 			        height: 40px !important;
 			        line-height: 40px !important;
@@ -734,9 +733,10 @@ function formatTime(totalSeconds) {
 					font-weight: bold !important;
 				}
 			`;
-				document.head.appendChild(style);
-			}
+
+			document.head.appendChild(style);
 		    document.body.appendChild(modal);
+
 
 			let allColumns = [
 			  { id: "mode", name: tt("modo"), field: "mode", width: 160, sortable: false },
@@ -818,12 +818,13 @@ function formatTime(totalSeconds) {
 			askAiButton.textContent = `🤖 ${t("ia_preguntar")}`;
 			askAiButton.style = "position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#2563eb;color:white;border:none;border-radius:9999px;padding:12px 18px;cursor:pointer;z-index:10025;box-shadow:0 8px 22px rgba(37,99,235,0.35);";
 
+
 			askAiButton.onclick = async () => {
-				if (aiAlreadySelected) return;
 				askAiButton.disabled = true;
 				askAiButton.textContent = `🤖 ${t("ia_cargando")}`;
 				const aiRecommendation = await requestAiTransportRecommendation(results);
 				askAiButton.disabled = false;
+
 
 				if (!aiRecommendation || !aiRecommendation.recommendedMode) {
 					askAiButton.textContent = `🤖 ${t("ia_error")}`;
@@ -834,12 +835,25 @@ function formatTime(totalSeconds) {
 					return;
 				}
 
+
 				recommendedMode = aiRecommendation.recommendedMode;
 				const translatedMode = modeTranslations[idiomaActual][recommendedMode] || recommendedMode;
 
-				applyRecommendedHighlight();
-				aiAlreadySelected = true;
-				askAiButton.remove();
+				grid.removeCellCssStyles("iaRecommendedRow");
+				const recommendedIndex = data.findIndex(item => item.route !== "-" && item.route.mode === recommendedMode);
+				if (recommendedIndex >= 0) {
+					grid.setCellCssStyles("iaRecommendedRow", {
+						[recommendedIndex]: {
+							mode: "ia-recommended-cell--mode",
+							distance: "ia-recommended-cell",
+							time: "ia-recommended-cell",
+							co2: "ia-recommended-cell",
+							detail: "ia-recommended-cell",
+							ruta: "ia-recommended-cell"
+						}
+					});
+				}
+
 
 				showAiRecommendationBubble(aiRecommendation, translatedMode, () => {
 					if (!recommendedMode) return;
