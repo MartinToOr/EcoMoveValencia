@@ -314,6 +314,8 @@ app.post('/api/recommend-transport', async (req, res) => {
 
     const rawCandidates = Array.isArray(req.body?.candidates) ? req.body.candidates : [];
     const userContext = typeof req.body?.context === 'string' ? req.body.context.trim() : '';
+    const languageRaw = typeof req.body?.language === 'string' ? req.body.language.trim().toLowerCase() : 'es';
+    const responseLanguage = ['es', 'en', 'val'].includes(languageRaw) ? languageRaw : 'es';
     const candidates = rawCandidates
         .filter(candidate => candidate && !candidate.error && Number.isFinite(candidate.totalDistance) && Number.isFinite(candidate.totalTime))
         .map(candidate => ({
@@ -380,6 +382,14 @@ app.post('/api/recommend-transport', async (req, res) => {
     };
 
     const buildFallbackReason = (recommendedCandidate) => {
+
+        if (responseLanguage === 'en') {
+            return `I could not generate a dynamic AI explanation right now. The calculated recommended mode is ${recommendedCandidate.mode}.`;
+        }
+        if (responseLanguage === 'val') {
+            return `No he pogut generar una explicació dinàmica d'IA ara mateix. El mode recomanat calculat és ${recommendedCandidate.mode}.`;
+        }
+
         return `No he podido generar una explicación dinámica de IA en este momento. El modo recomendado calculado es ${recommendedCandidate.mode}.`;
     };
 
@@ -393,13 +403,46 @@ app.post('/api/recommend-transport', async (req, res) => {
         let reason = '';
 
         try {
+
+            const labelByMode = {
+                WALKING: responseLanguage === 'en' ? 'Walking' : responseLanguage === 'val' ? 'A peu' : 'Andando',
+                BICYCLING: responseLanguage === 'en' ? 'Bicycle' : responseLanguage === 'val' ? 'Bicicleta' : 'Bicicleta',
+                DRIVING: responseLanguage === 'en' ? 'Car' : responseLanguage === 'val' ? 'Cotxe' : 'Coche',
+                Valenbisi: 'Valenbisi',
+                PATINETE: responseLanguage === 'en' ? 'Scooter' : responseLanguage === 'val' ? 'Patinet' : 'Patinete',
+                METRO: 'Metro',
+                BUS: responseLanguage === 'en' ? 'Bus' : responseLanguage === 'val' ? 'Autobús' : 'Autobús',
+                TRAIN: responseLanguage === 'en' ? 'Train' : responseLanguage === 'val' ? 'Tren' : 'Tren',
+                TAXI: 'Taxi',
+                Taxi: 'Taxi',
+                ELECTRIC_CAR: responseLanguage === 'en' ? 'Electric car' : responseLanguage === 'val' ? 'Cotxe elèctric' : 'Coche eléctrico',
+                DIESEL_CAR: responseLanguage === 'en' ? 'Diesel car' : responseLanguage === 'val' ? 'Cotxe dièsel' : 'Coche diésel',
+                GASOLINE_CAR: responseLanguage === 'en' ? 'Gasoline car' : responseLanguage === 'val' ? 'Cotxe gasolina' : 'Coche gasolina',
+                COCHE_HIBRIDO: responseLanguage === 'en' ? 'Hybrid car' : responseLanguage === 'val' ? 'Cotxe híbrid' : 'Coche híbrido',
+                COCHE_DE_HIDROGENO: responseLanguage === 'en' ? 'Hydrogen car' : responseLanguage === 'val' ? "Cotxe d'hidrogen" : 'Coche de hidrógeno',
+                CAMION: responseLanguage === 'en' ? 'Truck' : responseLanguage === 'val' ? 'Camió' : 'Camión',
+                COMBUSTION_MOTORBIKE: responseLanguage === 'en' ? 'Combustion motorbike' : responseLanguage === 'val' ? 'Moto de combustió' : 'Moto de combustión',
+                ELECTRIC_MOTORBIKE: responseLanguage === 'en' ? 'Electric motorbike' : responseLanguage === 'val' ? 'Moto elèctrica' : 'Moto eléctrica',
+                CICLOMOTOR: responseLanguage === 'en' ? 'Moped' : responseLanguage === 'val' ? 'Ciclomotor' : 'Ciclomotor'
+            };
+
+            const toLabeledCandidate = (candidate) => ({
+                ...candidate,
+                modeLabel: labelByMode[candidate.mode] || candidate.mode
+            });
+
             const systemPrompt = `Eres un asistente experto en movilidad sostenible de Valencia. Tu objetivo es explicar una recomendación ya decidida, sin cambiarla.
 Reglas:
-1) Devuelve SOLO JSON válido con: {"reason":"explicación en español"}.
+1) Devuelve SOLO JSON válido con: {"reason":"explicación"}.
 2) Debes defender el modo recomendado usando tiempo, distancia y CO2 exactos que recibes.
 3) Haz una reflexión comparativa fiel a los datos exactos (tiempo, distancia y CO2) e indica empates reales cuando existan.
 4) Evita plantillas rígidas o frases fijas; redacta una explicación natural y útil en máximo 4 frases.
-5) No inventes datos ni afirmes que una opción es "la mejor" en un criterio si hay empate.`;
+5) No inventes datos ni afirmes que una opción es "la mejor" en un criterio si hay empate.
+6) Responde estrictamente en este idioma: ${responseLanguage === 'en' ? 'English' : responseLanguage === 'val' ? 'valencià' : 'español'}.
+7) Usa modeLabel para nombrar los modos cuando exista.
+8) Nunca escribas el typo "BYCICLING".`;
+
+
 
             const tieTolerance = 1e-9;
             const rankingTiempo = [...candidates]
@@ -427,17 +470,20 @@ Reglas:
 
             const explanationPrompt = {
                 ...userPrompt,
-                modoRecomendadoFijo: recommendedCandidate,
-                mejorTiempo: bestByTime,
-                mejorEmisiones: bestByCo2,
-                mejorDistancia: bestByDistance,
-                rankingTiempo,
-                rankingEmisiones,
-                rankingDistancia,
+
+                idiomaRespuesta: responseLanguage,
+                modoRecomendadoFijo: toLabeledCandidate(recommendedCandidate),
+                mejorTiempo: toLabeledCandidate(bestByTime),
+                mejorEmisiones: toLabeledCandidate(bestByCo2),
+                mejorDistancia: toLabeledCandidate(bestByDistance),
+                rankingTiempo: rankingTiempo.map(toLabeledCandidate),
+                rankingEmisiones: rankingEmisiones.map(toLabeledCandidate),
+                rankingDistancia: rankingDistancia.map(toLabeledCandidate),
                 empates: {
-                    tiempo: empateTiempo,
-                    emisiones: empateEmisiones,
-                    distancia: empateDistancia
+                    tiempo: empateTiempo.map(mode => ({ mode, modeLabel: labelByMode[mode] || mode })),
+                    emisiones: empateEmisiones.map(mode => ({ mode, modeLabel: labelByMode[mode] || mode })),
+                    distancia: empateDistancia.map(mode => ({ mode, modeLabel: labelByMode[mode] || mode }))
+
                 }
             };
 
