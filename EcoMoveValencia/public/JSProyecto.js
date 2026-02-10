@@ -543,7 +543,10 @@ function formatTime(totalSeconds) {
 					return null;
 				}
 
-				return await response.json();
+				const payload = await response.json();
+				if (!payload || typeof payload !== "object") return null;
+				if (payload.reason != null) payload.reason = String(payload.reason);
+				return payload;
 			} catch (error) {
 				console.warn('Error al solicitar recomendación IA:', error);
 				return null;
@@ -562,7 +565,7 @@ function formatTime(totalSeconds) {
 
 			const modal = document.createElement("div");
 			modal.id = "aiRecommendationModal";
-			modal.style = "position:fixed;inset:0;background:rgba(15,23,42,0.52);display:flex;align-items:center;justify-content:center;z-index:10030;padding:16px;";
+			modal.style = "position:fixed;inset:0;background:rgba(15,23,42,0.52);display:flex;align-items:center;justify-content:center;z-index:2147483647;padding:16px;";
 
 			const card = document.createElement("div");
 			card.style = "position:relative;background:#ffffff;border-radius:16px;padding:16px;max-width:min(94vw,700px);width:100%;box-shadow:0 14px 38px rgba(2,6,23,0.25);";
@@ -586,7 +589,7 @@ function formatTime(totalSeconds) {
 			bubbleTitle.textContent = `🤖 ${t("ia_recomendacion")}: ${translatedMode}`;
 
 			const bubbleReason = document.createElement("div");
-			const fullReason = aiRecommendation.reason || t("ia_error");
+			const fullReason = String(aiRecommendation?.reason ?? t("ia_error")).trim() || t("ia_error");
 
 			const tail = document.createElement("div");
 			tail.style = "position:absolute;left:-9px;bottom:16px;width:18px;height:18px;background:#eff6ff;border-left:1px solid #93c5fd;border-bottom:1px solid #93c5fd;transform:rotate(45deg);";
@@ -707,6 +710,13 @@ function formatTime(totalSeconds) {
 			    .slick-header-columns {
 			        height: 40px !important;
 			    }
+				.ia-recommended-cell {
+					background: #dcfce7 !important;
+				}
+				.ia-recommended-cell--mode {
+					background: #dcfce7 !important;
+					font-weight: bold !important;
+				}
 			`;
 			document.head.appendChild(style);
 		    document.body.appendChild(modal);
@@ -780,6 +790,7 @@ function formatTime(totalSeconds) {
 
 				if (!aiRecommendation || !aiRecommendation.recommendedMode) {
 					askAiButton.textContent = `🤖 ${t("ia_error")}`;
+					showAiRecommendationBubble({ reason: t("ia_error") }, t("ia_recomendacion"), null);
 					setTimeout(() => {
 						askAiButton.textContent = `🤖 ${t("ia_preguntar")}`;
 					}, 1800);
@@ -794,12 +805,12 @@ function formatTime(totalSeconds) {
 				if (recommendedIndex >= 0) {
 					grid.setCellCssStyles("iaRecommendedRow", {
 						[recommendedIndex]: {
-							mode: "background: #dcfce7; font-weight: bold;",
-							distance: "background: #dcfce7;",
-							time: "background: #dcfce7;",
-							co2: "background: #dcfce7;",
-							detail: "background: #dcfce7;",
-							ruta: "background: #dcfce7;"
+							mode: "ia-recommended-cell--mode",
+							distance: "ia-recommended-cell",
+							time: "ia-recommended-cell",
+							co2: "ia-recommended-cell",
+							detail: "ia-recommended-cell",
+							ruta: "ia-recommended-cell"
 						}
 					});
 				}
