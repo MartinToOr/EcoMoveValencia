@@ -382,12 +382,14 @@ app.post('/api/recommend-transport', async (req, res) => {
     };
 
     const buildFallbackReason = (recommendedCandidate) => {
+
         if (responseLanguage === 'en') {
             return `I could not generate a dynamic AI explanation right now. The calculated recommended mode is ${recommendedCandidate.mode}.`;
         }
         if (responseLanguage === 'val') {
             return `No he pogut generar una explicació dinàmica d'IA ara mateix. El mode recomanat calculat és ${recommendedCandidate.mode}.`;
         }
+
         return `No he podido generar una explicación dinámica de IA en este momento. El modo recomendado calculado es ${recommendedCandidate.mode}.`;
     };
 
@@ -401,6 +403,7 @@ app.post('/api/recommend-transport', async (req, res) => {
         let reason = '';
 
         try {
+
             const labelByMode = {
                 WALKING: responseLanguage === 'en' ? 'Walking' : responseLanguage === 'val' ? 'A peu' : 'Andando',
                 BICYCLING: responseLanguage === 'en' ? 'Bicycle' : responseLanguage === 'val' ? 'Bicicleta' : 'Bicicleta',
@@ -439,6 +442,8 @@ Reglas:
 7) Usa modeLabel para nombrar los modos cuando exista.
 8) Nunca escribas el typo "BYCICLING".`;
 
+
+
             const tieTolerance = 1e-9;
             const rankingTiempo = [...candidates]
                 .sort((a, b) => a.totalTime - b.totalTime)
@@ -465,6 +470,7 @@ Reglas:
 
             const explanationPrompt = {
                 ...userPrompt,
+
                 idiomaRespuesta: responseLanguage,
                 modoRecomendadoFijo: toLabeledCandidate(recommendedCandidate),
                 mejorTiempo: toLabeledCandidate(bestByTime),
@@ -477,6 +483,7 @@ Reglas:
                     tiempo: empateTiempo.map(mode => ({ mode, modeLabel: labelByMode[mode] || mode })),
                     emisiones: empateEmisiones.map(mode => ({ mode, modeLabel: labelByMode[mode] || mode })),
                     distancia: empateDistancia.map(mode => ({ mode, modeLabel: labelByMode[mode] || mode }))
+
                 }
             };
 

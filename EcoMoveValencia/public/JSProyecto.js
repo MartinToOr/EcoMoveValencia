@@ -544,10 +544,12 @@ function formatTime(totalSeconds) {
 					return null;
 				}
 
+
 				const payload = await response.json();
 				if (!payload || typeof payload !== "object") return null;
 				if (payload.reason != null) payload.reason = String(payload.reason);
 				return payload;
+
 			} catch (error) {
 				console.warn('Error al solicitar recomendación IA:', error);
 				return null;
@@ -568,6 +570,7 @@ function formatTime(totalSeconds) {
 			modal.id = "aiRecommendationModal";
 			modal.style = "position:fixed;inset:0;background:rgba(15,23,42,0.52);display:flex;align-items:center;justify-content:center;z-index:2147483647;padding:16px;";
 
+
 			const card = document.createElement("div");
 			card.style = "position:relative;background:#ffffff;border-radius:16px;padding:16px;max-width:min(94vw,700px);width:100%;box-shadow:0 14px 38px rgba(2,6,23,0.25);";
 
@@ -578,6 +581,7 @@ function formatTime(totalSeconds) {
 			const content = document.createElement("div");
 			content.style = "display:flex;align-items:flex-end;gap:12px;padding-top:22px;";
 
+
 			const robotAvatar = document.createElement("img");
 			robotAvatar.alt = "Robot IA";
 			robotAvatar.src = "img/robot_bocalisa.png";
@@ -585,6 +589,7 @@ function formatTime(totalSeconds) {
 				robotAvatar.style.display = "none";
 			};
 			robotAvatar.style = "width:84px;height:84px;min-width:84px;border-radius:50%;background:#dbeafe;object-fit:cover;box-shadow:0 4px 12px rgba(30,64,175,0.15);";
+
 
 			const bubble = document.createElement("div");
 			bubble.style = "position:relative;flex:1;background:#eff6ff;border:1px solid #93c5fd;color:#1e3a8a;border-radius:14px;padding:14px;line-height:1.45;min-height:120px;";
@@ -594,6 +599,7 @@ function formatTime(totalSeconds) {
 			bubbleTitle.textContent = `${t("ia_recomendacion")}: ${translatedMode}`;
 
 			const bubbleReason = document.createElement("div");
+
 			const fullReason = String(aiRecommendation?.reason ?? t("ia_error")).trim() || t("ia_error");
 
 			const tail = document.createElement("div");
@@ -616,6 +622,7 @@ function formatTime(totalSeconds) {
 			const routeButton = document.createElement("button");
 			routeButton.textContent = t("ia_ver_ruta");
 			routeButton.style = "background:#10b981;color:#fff;border:none;border-radius:10px;padding:8px 12px;cursor:pointer;display:none;";
+
 
 			let typingIndex = 0;
 			let mouthToggle = false;
@@ -640,6 +647,7 @@ function formatTime(totalSeconds) {
 				clearInterval(speakingFrameTimer);
 				modal.remove();
 			};
+
 
 			routeButton.onclick = () => {
 				if (typeof onRouteClick === "function") onRouteClick();
@@ -692,7 +700,9 @@ function formatTime(totalSeconds) {
 
 		    let modalContent = document.createElement("div");
 			const isMobile = window.innerWidth <= 768;
+
 			modalContent.style = `background-color:#fff;padding:20px;border-radius:8px;position:relative;box-sizing:border-box;width:${isMobile ? "95vw" : "1300px"};max-height:94vh;`;
+
 
 		    let closeButton = document.createElement("button");
 		    closeButton.textContent = "✖";
@@ -709,11 +719,14 @@ function formatTime(totalSeconds) {
 
 		    let gridContainer = document.createElement("div");
 		    gridContainer.id = "gridContainer";
+
 		    gridContainer.style = "width:100%;height:auto;margin-top:40px;";
+
 		    modalContent.appendChild(gridContainer);
 
 		    modal.appendChild(modalContent);
 			
+
 			let style = document.getElementById("comparison-grid-style");
 			if (!style) {
 				style = document.createElement("style");
@@ -739,6 +752,8 @@ function formatTime(totalSeconds) {
 			}
 		    document.body.appendChild(modal);
 
+
+
 			let allColumns = [
 			  { id: "mode", name: tt("modo"), field: "mode", width: 160, sortable: false },
 			  { id: "distance", name: tt("distancia"), field: "distance", width: 120, sortable: true },
@@ -762,6 +777,7 @@ function formatTime(totalSeconds) {
 
 
 
+
 		    var options = {
 		        enableCellNavigation: true,
 		        enableColumnReorder: true,
@@ -769,6 +785,7 @@ function formatTime(totalSeconds) {
 		        forceFitColumns: true,
 				autoHeight: true
 		    };
+
 
 		    var data = results.map(item => {
 		        return item.error ? {
@@ -790,6 +807,7 @@ function formatTime(totalSeconds) {
 			
 
 		    data.sort((a, b) => parseFloat(a.co2 || 0) - parseFloat(b.co2 || 0));
+
 
 		    var grid = new Slick.Grid("#gridContainer", data, columns, options);
 
@@ -816,6 +834,7 @@ function formatTime(totalSeconds) {
 			removeFloatingAiButton();
 			const askAiButton = document.createElement("button");
 			askAiButton.id = "askAiFloatingButton";
+
 			askAiButton.textContent = t("ia_preguntar");
 			askAiButton.style = "position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:linear-gradient(135deg,#10b981 0%,#2563eb 100%);color:white;border:none;border-radius:9999px;padding:12px 20px;cursor:pointer;z-index:10025;box-shadow:0 10px 24px rgba(37,99,235,0.35);font-weight:700;letter-spacing:0.2px;";
 
@@ -841,6 +860,8 @@ function formatTime(totalSeconds) {
 				applyRecommendedHighlight();
 				aiAlreadySelected = true;
 				askAiButton.remove();
+
+
 
 				showAiRecommendationBubble(aiRecommendation, translatedMode, () => {
 					if (!recommendedMode) return;
@@ -881,10 +902,12 @@ function formatTime(totalSeconds) {
 		            return isAscending ? valA - valB : valB - valA;
 		        });
 
+
 		        grid.setData(data);
 		        grid.render();
 				applyRecommendedHighlight();
 		    });
+
 
 			// Obtener referencia al botón
 			const btnMostrarModal = document.getElementById("btnMostrarModal");
