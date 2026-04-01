@@ -51,9 +51,9 @@ const openAiModel = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 
 let valenbisiStations = [];
 let taxiStations = []; 
-let stationUsage;
-let stationBusUsage;
-let stationRodaliaUsage;
+let stationUsage = [];
+let stationBusUsage = [];
+let stationRodaliaUsage = [];
 // Clave de Google Maps obtenida de la variable de entorno
 const apiKey = process.env.GOOGLE_MAPS_API_KEY || "";
 const router = express.Router();
@@ -572,31 +572,78 @@ app.listen(port, "0.0.0.0", () => {
 // Carga de estaciones de bicicleta
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function loadValenBisiStations(url) {
-    return fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.results) {
-               // valenbisiStations = []; // Limpiar antes de cargar nuevas estaciones
-                
-                data.results.forEach(station => {
-                    let lat = station.geo_point_2d.lat;
-                    let lon = station.geo_point_2d.lon;
-                    let address = station.address;
-                    let available = station.available;
-                    let total = station.total;
-
-         
-                    valenbisiStations.push({ lat, lon, address, available, total });
-                });
-            }
-        })
-        .catch(error => console.error("Error al cargar estaciones de Valenbisi:", error));
+async function fetchJsonSafe(url) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status} en ${url}`);
+    }
+    return response.json();
 }
 
-loadValenBisiStations("https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=100");
-loadValenBisiStations("https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=100&offset=100");
-loadValenBisiStations("https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=73&offset=200");
+async function loadValenBisiFromOpenDataSoft() {
+    const urls = [
+        "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=100",
+        "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=100&offset=100",
+        "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=73&offset=200"
+    ];
+
+    const responses = await Promise.all(urls.map(url => fetchJsonSafe(url)));
+    const allStations = responses.map(item => item.results || []).flat();
+
+    return allStations
+        .filter(station => station.geo_point_2d?.lat && station.geo_point_2d?.lon)
+        .map(station => ({
+            lat: station.geo_point_2d.lat,
+            lon: station.geo_point_2d.lon,
+            address: station.address || station.number || "Estación Valenbisi",
+            available: station.available ?? station.bike_slots ?? 0,
+            total: station.total ?? station.open_slots ?? 0
+        }));
+}
+
+async function loadValenBisiFromCityBikes() {
+    const data = await fetchJsonSafe("https://api.citybik.es/v2/networks/valenbisi");
+    const stations = data?.network?.stations || [];
+
+    return stations
+        .filter(station => typeof station.latitude === "number" && typeof station.longitude === "number")
+        .map(station => {
+            const freeBikes = Number(station.free_bikes ?? 0);
+            const emptySlots = Number(station.empty_slots ?? 0);
+            const totalSlots = Number.isFinite(freeBikes + emptySlots) ? freeBikes + emptySlots : 0;
+            return {
+                lat: station.latitude,
+                lon: station.longitude,
+                address: station.name || "Estación Valenbisi",
+                available: freeBikes,
+                total: totalSlots
+            };
+        });
+}
+
+async function refreshValenBisiStations() {
+    const sources = [
+        { name: "OpenDataSoft", loader: loadValenBisiFromOpenDataSoft },
+        { name: "CityBikes", loader: loadValenBisiFromCityBikes }
+    ];
+
+    for (const source of sources) {
+        try {
+            const stations = await source.loader();
+            if (stations.length > 0) {
+                valenbisiStations = stations;
+                console.log(`Valenbisi cargado desde ${source.name}: ${stations.length} estaciones.`);
+                return;
+            }
+        } catch (error) {
+            console.warn(`No se pudo cargar Valenbisi desde ${source.name}:`, error.message);
+        }
+    }
+
+    console.error("No se pudo cargar Valenbisi desde ninguna fuente.");
+}
+
+refreshValenBisiStations();
 
 
 
@@ -647,7 +694,8 @@ loadTaxiStations("https://valencia.opendatasoft.com/api/explore/v2.1/catalog/dat
 
 
 async function fetchAndConcatMetroData() {
-    const urlsMetro = [
+    const metroGeoPortalUrl = "https://geoportal.valencia.es/server/rest/services/OPENDATA/Trafico/MapServer/221/query?where=1%3D1&outFields=*&f=geojson";
+    const urlsMetroLegacy = [
         "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/fgv-estacions-estaciones/records?limit=100",
         "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/fgv-estacions-estaciones/records?limit=50&offset=100"
     ];
@@ -670,12 +718,38 @@ async function fetchAndConcatMetroData() {
 	]);
 
     try {
-        const responses = await Promise.all(urlsMetro.map(url => fetch(url)));
-        const data = await Promise.all(responses.map(res => res.json()));
-        let combinedResults = data[0].results.concat(data[1].results);
+        let combinedResults = [];
+        try {
+            const geoJsonData = await fetchJsonSafe(metroGeoPortalUrl);
+            const features = geoJsonData?.features || [];
+            combinedResults = features
+                .filter(feature =>
+                    Array.isArray(feature?.geometry?.coordinates) &&
+                    feature.geometry.coordinates.length >= 2
+                )
+                .map(feature => {
+                    const props = feature.properties || {};
+                    return {
+                        nombre: props.nombre || "Estación desconocida",
+                        linea: String(props.linea || ""),
+                        geo_point_2d: {
+                            lon: Number(feature.geometry.coordinates[0]),
+                            lat: Number(feature.geometry.coordinates[1])
+                        },
+                        codigo: props.codigo,
+                        proximas_llegadas: props.proximas_llegadas || null
+                    };
+                });
+            console.log(`Metro cargado desde Geoportal: ${combinedResults.length} estaciones.`);
+        } catch (geoportalError) {
+            console.warn("Geoportal metro no disponible, usando fuente legacy:", geoportalError.message);
+            const responses = await Promise.all(urlsMetroLegacy.map(url => fetch(url)));
+            const data = await Promise.all(responses.map(res => res.json()));
+            combinedResults = data.map(item => item.results || []).flat();
+        }
 
         combinedResults = combinedResults.map(estacion => {
-            let lineas = estacion.linea.split(',').map(l => l.trim());
+            let lineas = String(estacion.linea || "").split(',').map(l => l.trim()).filter(Boolean);
 
             if (estacionesLinea1Extra.has(estacion.nombre) && !lineas.includes("1")) {
                 lineas.push("1");
@@ -707,7 +781,8 @@ async function fetchAndConcatMetroData() {
 
 
 async function fetchAndConcatBUSData() {
-    const urlsBus = [
+    const busGeoPortalUrl = "https://geoportal.valencia.es/server/rest/services/OPENDATA/Trafico/MapServer/226/query?where=1%3D1&outFields=*&f=geojson";
+    const urlsBusLegacy = [
 		"https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/emt/records?limit=100&offset=0",		        
         "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/emt/records?limit=100&offset=100",
         "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/emt/records?limit=100&offset=200",
@@ -723,16 +798,41 @@ async function fetchAndConcatBUSData() {
     ];
 
     try {
-        // Hacer las solicitudes en paralelo
-        const responses = await Promise.all(urlsBus.map(url => fetch(url)));
+        try {
+            const geoJsonData = await fetchJsonSafe(busGeoPortalUrl);
+            const features = geoJsonData?.features || [];
 
-        // Convertir las respuestas a JSON
+            stationBusUsage = features
+                .filter(feature =>
+                    Array.isArray(feature?.geometry?.coordinates) &&
+                    feature.geometry.coordinates.length >= 2 &&
+                    feature?.properties?.denominacion
+                )
+                .map(feature => {
+                    const props = feature.properties || {};
+                    return {
+                        geo_point_2d: {
+                            lon: Number(feature.geometry.coordinates[0]),
+                            lat: Number(feature.geometry.coordinates[1])
+                        },
+                        denominacion: props.denominacion,
+                        lineas: props.lineas || "",
+                        proximas_llegadas: props.proximas_llegadas || "",
+                        id_parada: props.id_parada || null,
+                        suprimida: props.suprimida || 0
+                    };
+                })
+                .filter(stop => stop.suprimida !== 1);
+
+            console.log(`Bus cargado desde Geoportal: ${stationBusUsage.length} paradas.`);
+            return;
+        } catch (geoportalError) {
+            console.warn("Geoportal bus no disponible, usando fuente legacy:", geoportalError.message);
+        }
+
+        const responses = await Promise.all(urlsBusLegacy.map(url => fetch(url)));
         const data = await Promise.all(responses.map(res => res.json()));
-
-        // Concatenar correctamente todos los resultados
-        //stationBusUsage = data.flat();  // Si el JSON devuelve un array directamente
-         stationBusUsage = data.map(d => d.results).flat();  // Si los datos vienen en `results`
-        
+        stationBusUsage = data.map(d => d.results || []).flat();
     
     } catch (error) {
         console.error("Error al obtener los datos: ", error);
