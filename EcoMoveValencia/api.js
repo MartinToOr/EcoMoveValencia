@@ -580,6 +580,7 @@ async function fetchJsonSafe(url) {
     return response.json();
 }
 
+
 async function loadValenBisiFromGeoPortal() {
     const geoPortalUrl = "https://geoportal.valencia.es/server/rest/services/OPENDATA/Trafico/MapServer/228/query?where=1%3D1&outFields=*&f=geojson";
     const data = await fetchJsonSafe(geoPortalUrl);
@@ -602,6 +603,7 @@ async function loadValenBisiFromGeoPortal() {
         })
         .filter(station => Number.isFinite(station.lat) && Number.isFinite(station.lon));
 }
+
 
 async function loadValenBisiFromOpenDataSoft() {
     const urls = [
@@ -646,6 +648,7 @@ async function loadValenBisiFromCityBikes() {
 
 async function refreshValenBisiStations() {
     const sources = [
+
         { name: "GeoPortal", loader: loadValenBisiFromGeoPortal },
         { name: "OpenDataSoft", loader: loadValenBisiFromOpenDataSoft },
         { name: "CityBikes", loader: loadValenBisiFromCityBikes }
