@@ -694,7 +694,8 @@ loadTaxiStations("https://valencia.opendatasoft.com/api/explore/v2.1/catalog/dat
 
 
 async function fetchAndConcatMetroData() {
-    const urlsMetro = [
+    const metroGeoPortalUrl = "https://geoportal.valencia.es/server/rest/services/OPENDATA/Trafico/MapServer/221/query?where=1%3D1&outFields=*&f=geojson";
+    const urlsMetroLegacy = [
         "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/fgv-estacions-estaciones/records?limit=100",
         "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/fgv-estacions-estaciones/records?limit=50&offset=100"
     ];
@@ -717,12 +718,38 @@ async function fetchAndConcatMetroData() {
 	]);
 
     try {
-        const responses = await Promise.all(urlsMetro.map(url => fetch(url)));
-        const data = await Promise.all(responses.map(res => res.json()));
-        let combinedResults = data[0].results.concat(data[1].results);
+        let combinedResults = [];
+        try {
+            const geoJsonData = await fetchJsonSafe(metroGeoPortalUrl);
+            const features = geoJsonData?.features || [];
+            combinedResults = features
+                .filter(feature =>
+                    Array.isArray(feature?.geometry?.coordinates) &&
+                    feature.geometry.coordinates.length >= 2
+                )
+                .map(feature => {
+                    const props = feature.properties || {};
+                    return {
+                        nombre: props.nombre || "Estación desconocida",
+                        linea: String(props.linea || ""),
+                        geo_point_2d: {
+                            lon: Number(feature.geometry.coordinates[0]),
+                            lat: Number(feature.geometry.coordinates[1])
+                        },
+                        codigo: props.codigo,
+                        proximas_llegadas: props.proximas_llegadas || null
+                    };
+                });
+            console.log(`Metro cargado desde Geoportal: ${combinedResults.length} estaciones.`);
+        } catch (geoportalError) {
+            console.warn("Geoportal metro no disponible, usando fuente legacy:", geoportalError.message);
+            const responses = await Promise.all(urlsMetroLegacy.map(url => fetch(url)));
+            const data = await Promise.all(responses.map(res => res.json()));
+            combinedResults = data.map(item => item.results || []).flat();
+        }
 
         combinedResults = combinedResults.map(estacion => {
-            let lineas = estacion.linea.split(',').map(l => l.trim());
+            let lineas = String(estacion.linea || "").split(',').map(l => l.trim()).filter(Boolean);
 
             if (estacionesLinea1Extra.has(estacion.nombre) && !lineas.includes("1")) {
                 lineas.push("1");
