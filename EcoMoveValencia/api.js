@@ -51,9 +51,9 @@ const openAiModel = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 
 let valenbisiStations = [];
 let taxiStations = []; 
-let stationUsage;
-let stationBusUsage;
-let stationRodaliaUsage;
+let stationUsage = [];
+let stationBusUsage = [];
+let stationRodaliaUsage = [];
 // Clave de Google Maps obtenida de la variable de entorno
 const apiKey = process.env.GOOGLE_MAPS_API_KEY || "";
 const router = express.Router();
