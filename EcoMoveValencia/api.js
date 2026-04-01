@@ -51,9 +51,9 @@ const openAiModel = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 
 let valenbisiStations = [];
 let taxiStations = []; 
-let stationUsage;
-let stationBusUsage;
-let stationRodaliaUsage;
+let stationUsage = [];
+let stationBusUsage = [];
+let stationRodaliaUsage = [];
 // Clave de Google Maps obtenida de la variable de entorno
 const apiKey = process.env.GOOGLE_MAPS_API_KEY || "";
 const router = express.Router();
@@ -572,31 +572,78 @@ app.listen(port, "0.0.0.0", () => {
 // Carga de estaciones de bicicleta
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function loadValenBisiStations(url) {
-    return fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.results) {
-               // valenbisiStations = []; // Limpiar antes de cargar nuevas estaciones
-                
-                data.results.forEach(station => {
-                    let lat = station.geo_point_2d.lat;
-                    let lon = station.geo_point_2d.lon;
-                    let address = station.address;
-                    let available = station.available;
-                    let total = station.total;
-
-         
-                    valenbisiStations.push({ lat, lon, address, available, total });
-                });
-            }
-        })
-        .catch(error => console.error("Error al cargar estaciones de Valenbisi:", error));
+async function fetchJsonSafe(url) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status} en ${url}`);
+    }
+    return response.json();
 }
 
-loadValenBisiStations("https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=100");
-loadValenBisiStations("https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=100&offset=100");
-loadValenBisiStations("https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=73&offset=200");
+async function loadValenBisiFromOpenDataSoft() {
+    const urls = [
+        "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=100",
+        "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=100&offset=100",
+        "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=73&offset=200"
+    ];
+
+    const responses = await Promise.all(urls.map(url => fetchJsonSafe(url)));
+    const allStations = responses.map(item => item.results || []).flat();
+
+    return allStations
+        .filter(station => station.geo_point_2d?.lat && station.geo_point_2d?.lon)
+        .map(station => ({
+            lat: station.geo_point_2d.lat,
+            lon: station.geo_point_2d.lon,
+            address: station.address || station.number || "Estación Valenbisi",
+            available: station.available ?? station.bike_slots ?? 0,
+            total: station.total ?? station.open_slots ?? 0
+        }));
+}
+
+async function loadValenBisiFromCityBikes() {
+    const data = await fetchJsonSafe("https://api.citybik.es/v2/networks/valenbisi");
+    const stations = data?.network?.stations || [];
+
+    return stations
+        .filter(station => typeof station.latitude === "number" && typeof station.longitude === "number")
+        .map(station => {
+            const freeBikes = Number(station.free_bikes ?? 0);
+            const emptySlots = Number(station.empty_slots ?? 0);
+            const totalSlots = Number.isFinite(freeBikes + emptySlots) ? freeBikes + emptySlots : 0;
+            return {
+                lat: station.latitude,
+                lon: station.longitude,
+                address: station.name || "Estación Valenbisi",
+                available: freeBikes,
+                total: totalSlots
+            };
+        });
+}
+
+async function refreshValenBisiStations() {
+    const sources = [
+        { name: "OpenDataSoft", loader: loadValenBisiFromOpenDataSoft },
+        { name: "CityBikes", loader: loadValenBisiFromCityBikes }
+    ];
+
+    for (const source of sources) {
+        try {
+            const stations = await source.loader();
+            if (stations.length > 0) {
+                valenbisiStations = stations;
+                console.log(`Valenbisi cargado desde ${source.name}: ${stations.length} estaciones.`);
+                return;
+            }
+        } catch (error) {
+            console.warn(`No se pudo cargar Valenbisi desde ${source.name}:`, error.message);
+        }
+    }
+
+    console.error("No se pudo cargar Valenbisi desde ninguna fuente.");
+}
+
+refreshValenBisiStations();
 
 
 
