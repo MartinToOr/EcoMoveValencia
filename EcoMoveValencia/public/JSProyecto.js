@@ -2414,14 +2414,13 @@ function muestraRutaDesdeTabla(respuesta){
 				}
 				
 				
-				function loadTaxiStations(url) {
-				    return fetch(url)
-				        .then(fetchJsonOrThrow)						
-				        .then(data => {
-							console.log(data);
-				            data.forEach(station => {
-				                if (station.lat && station.lon && station.calle) {
-				                    let lat = parseFloat(station.lat);
+		function loadTaxiStations(url) {
+		    return fetch(url)
+		        .then(fetchJsonOrThrow)						
+		        .then(data => {
+		            data.forEach(station => {
+		                if (station.lat && station.lon && station.calle) {
+		                    let lat = parseFloat(station.lat);
 				                    let lon = parseFloat(station.lon);
 				                    let nombre = station.calle || "Estación desconocida";
 
@@ -2434,7 +2433,7 @@ function muestraRutaDesdeTabla(respuesta){
 				                }
 				            });
 				        })
-				        .catch(error => console.error("Error al cargar estaciones de taxi:", response));
+				        .catch(error => console.error("Error al cargar estaciones de taxi:", error));
 				}
 
 
@@ -2446,11 +2445,19 @@ function muestraRutaDesdeTabla(respuesta){
 		        	const stations = Array.isArray(data) ? data : (data.results || []);
 		            if (stations.length > 0) {
 		                stations.forEach(station => {
-		                    let lat = station.geo_point_2d.lat;
-		                    let lon = station.geo_point_2d.lon;
-		                    let address = station.address;
-		                    let available = station.available;
-		                    let total = station.total;
+		                    let lat = station.geo_point_2d?.lat ?? station.lat;
+		                    let lon = station.geo_point_2d?.lon ?? station.lon;
+		                    let address = station.address || station.name || "Estación Valenbisi";
+		                    let available = station.available ?? station.free_bikes ?? 0;
+		                    let total = station.total ?? station.empty_slots ?? 0;
+
+		                    if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lon))) {
+		                        return;
+		                    }
+		                    lat = Number(lat);
+		                    lon = Number(lon);
+		                    available = Number(available) || 0;
+		                    total = Number(total) || 0;
 
 		                    let marker = L.marker([lat, lon], {
 		                        icon: createCustomIcon(20, "V", "blue"),

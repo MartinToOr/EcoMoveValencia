@@ -683,29 +683,35 @@ refreshValenBisiStations();
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-function loadTaxiStations(url) {
-    return fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.results) {
-               // valenbisiStations = []; // Limpiar antes de cargar nuevas estaciones
-                
-                data.results.forEach(station => {
-                    let lat = station.geo_point_2d.lat;
-                    let lon = station.geo_point_2d.lon;
-                    let calle = station.calle;
+async function refreshTaxiStations() {
+    const taxiGeoPortalUrl = "https://geoportal.valencia.es/server/rest/services/OPENDATA/Trafico/MapServer/185/query?where=1%3D1&outFields=*&f=geojson";
+    const data = await fetchJsonSafe(taxiGeoPortalUrl);
+    const features = data?.features || [];
 
+    taxiStations = features
+        .filter(feature =>
+            Array.isArray(feature?.geometry?.coordinates) &&
+            feature.geometry.coordinates.length >= 2
+        )
+        .map(feature => {
+            const properties = feature.properties || {};
+            const tipocalle = (properties.tipocalle || "").trim();
+            const calle = (properties.calle || "").trim();
+            const numfinca = (properties.numfinca || "").trim();
+            const address = [tipocalle, calle, numfinca].filter(Boolean).join(" ").trim() || "Parada de taxi";
 
-         
-                    taxiStations.push({ lat, lon, calle });
-                });
-            }
+            return {
+                lat: Number(feature.geometry.coordinates[1]),
+                lon: Number(feature.geometry.coordinates[0]),
+                calle: address
+            };
         })
-        .catch(error => console.error("Error al cargar estaciones de Valenbisi:", error));
+        .filter(station => Number.isFinite(station.lat) && Number.isFinite(station.lon));
+
+    console.log(`Taxi cargado desde Geoportal: ${taxiStations.length} paradas.`);
 }
 
-loadTaxiStations("https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/taxis/records?limit=100");
-loadTaxiStations("https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/taxis/records?limit=100&offset=100");
+refreshTaxiStations().catch(error => console.error("Error al cargar estaciones de taxi:", error.message));
 
 
 
