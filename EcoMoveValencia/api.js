@@ -781,7 +781,8 @@ async function fetchAndConcatMetroData() {
 
 
 async function fetchAndConcatBUSData() {
-    const urlsBus = [
+    const busGeoPortalUrl = "https://geoportal.valencia.es/server/rest/services/OPENDATA/Trafico/MapServer/226/query?where=1%3D1&outFields=*&f=geojson";
+    const urlsBusLegacy = [
 		"https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/emt/records?limit=100&offset=0",		        
         "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/emt/records?limit=100&offset=100",
         "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/emt/records?limit=100&offset=200",
@@ -797,16 +798,41 @@ async function fetchAndConcatBUSData() {
     ];
 
     try {
-        // Hacer las solicitudes en paralelo
-        const responses = await Promise.all(urlsBus.map(url => fetch(url)));
+        try {
+            const geoJsonData = await fetchJsonSafe(busGeoPortalUrl);
+            const features = geoJsonData?.features || [];
 
-        // Convertir las respuestas a JSON
+            stationBusUsage = features
+                .filter(feature =>
+                    Array.isArray(feature?.geometry?.coordinates) &&
+                    feature.geometry.coordinates.length >= 2 &&
+                    feature?.properties?.denominacion
+                )
+                .map(feature => {
+                    const props = feature.properties || {};
+                    return {
+                        geo_point_2d: {
+                            lon: Number(feature.geometry.coordinates[0]),
+                            lat: Number(feature.geometry.coordinates[1])
+                        },
+                        denominacion: props.denominacion,
+                        lineas: props.lineas || "",
+                        proximas_llegadas: props.proximas_llegadas || "",
+                        id_parada: props.id_parada || null,
+                        suprimida: props.suprimida || 0
+                    };
+                })
+                .filter(stop => stop.suprimida !== 1);
+
+            console.log(`Bus cargado desde Geoportal: ${stationBusUsage.length} paradas.`);
+            return;
+        } catch (geoportalError) {
+            console.warn("Geoportal bus no disponible, usando fuente legacy:", geoportalError.message);
+        }
+
+        const responses = await Promise.all(urlsBusLegacy.map(url => fetch(url)));
         const data = await Promise.all(responses.map(res => res.json()));
-
-        // Concatenar correctamente todos los resultados
-        //stationBusUsage = data.flat();  // Si el JSON devuelve un array directamente
-         stationBusUsage = data.map(d => d.results).flat();  // Si los datos vienen en `results`
-        
+        stationBusUsage = data.map(d => d.results || []).flat();
     
     } catch (error) {
         console.error("Error al obtener los datos: ", error);
