@@ -580,6 +580,31 @@ async function fetchJsonSafe(url) {
     return response.json();
 }
 
+
+async function loadValenBisiFromGeoPortal() {
+    const geoPortalUrl = "https://geoportal.valencia.es/server/rest/services/OPENDATA/Trafico/MapServer/228/query?where=1%3D1&outFields=*&f=geojson";
+    const data = await fetchJsonSafe(geoPortalUrl);
+    const features = data?.features || [];
+
+    return features
+        .filter(feature =>
+            Array.isArray(feature?.geometry?.coordinates) &&
+            feature.geometry.coordinates.length >= 2
+        )
+        .map(feature => {
+            const props = feature.properties || {};
+            return {
+                lat: Number(feature.geometry.coordinates[1]),
+                lon: Number(feature.geometry.coordinates[0]),
+                address: props.address || props.name || `Estación ${props.number || ""}`.trim(),
+                available: Number(props.available ?? 0),
+                total: Number(props.total ?? 0)
+            };
+        })
+        .filter(station => Number.isFinite(station.lat) && Number.isFinite(station.lon));
+}
+
+
 async function loadValenBisiFromOpenDataSoft() {
     const urls = [
         "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=100",
@@ -623,6 +648,8 @@ async function loadValenBisiFromCityBikes() {
 
 async function refreshValenBisiStations() {
     const sources = [
+
+        { name: "GeoPortal", loader: loadValenBisiFromGeoPortal },
         { name: "OpenDataSoft", loader: loadValenBisiFromOpenDataSoft },
         { name: "CityBikes", loader: loadValenBisiFromCityBikes }
     ];
