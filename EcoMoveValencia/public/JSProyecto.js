@@ -2352,9 +2352,25 @@ function muestraRutaDesdeTabla(respuesta){
 
 
  
+		function fetchJsonOrThrow(response) {
+			if (!response.ok) {
+				throw new Error(`HTTP ${response.status} al cargar ${response.url}`);
+			}
+			return response.text().then(text => {
+				if (!text) {
+					return [];
+				}
+				try {
+					return JSON.parse(text);
+				} catch (error) {
+					throw new Error(`JSON inválido en ${response.url}: ${error.message}`);
+				}
+			});
+		}
+
 		function loadBusStations(url) {
 		    return fetch(url)
-		        .then(response => response.json())
+		        .then(fetchJsonOrThrow)
 		        .then(data => {
 		            data.forEach(station => {
 		                let lat = station.geo_point_2d.lat;
@@ -2377,7 +2393,7 @@ function muestraRutaDesdeTabla(respuesta){
 				
 				function loadRodaliaStations(url) {
 				    return fetch(url)
-				        .then(response => response.json())
+				        .then(fetchJsonOrThrow)
 				        .then(data => {
 				            data.forEach(station => {
 				                if (station.geo_point_2d && station.geo_point_2d.lat && station.geo_point_2d.lon) {
@@ -2400,7 +2416,7 @@ function muestraRutaDesdeTabla(respuesta){
 				
 				function loadTaxiStations(url) {
 				    return fetch(url)
-				        .then(response => response.json())						
+				        .then(fetchJsonOrThrow)						
 				        .then(data => {
 							console.log(data);
 				            data.forEach(station => {
@@ -2425,12 +2441,11 @@ function muestraRutaDesdeTabla(respuesta){
 
 		function loadValenBisiStations(url) {
 		    return fetch(url)
-		        .then(response => response.json())
+		        .then(fetchJsonOrThrow)
 		        .then(data => {
-		            if (data.results) {
-		               // valenbisiStations = []; // Limpiar antes de cargar nuevas estaciones
-		                
-		                data.results.forEach(station => {
+		        	const stations = Array.isArray(data) ? data : (data.results || []);
+		            if (stations.length > 0) {
+		                stations.forEach(station => {
 		                    let lat = station.geo_point_2d.lat;
 		                    let lon = station.geo_point_2d.lon;
 		                    let address = station.address;
@@ -2656,9 +2671,7 @@ function loadAllData() {
 	       loadBusStations("https://ecomovevalencia.onrender.com/api/getBus"),
 		   loadRodaliaStations("https://ecomovevalencia.onrender.com/api/getRodalia"),
 		   loadTaxiStations("https://ecomovevalencia.onrender.com/api/getTaxis"),
-	       loadValenBisiStations("https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=100"),
-	       loadValenBisiStations("https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=100&offset=100"),
-	       loadValenBisiStations("https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/valenbisi-disponibilitat-valenbisi-dsiponibilidad/records?limit=73&offset=200")
+	       loadValenBisiStations("https://ecomovevalencia.onrender.com/api/getBicis")
 	   ];
 
     Promise.all(promises).then(function() {
