@@ -424,10 +424,26 @@ let inicio;
 		    return km * factor;
 		}
 
+		/* Funciones de formato común para distancia, tiempo y decimales con coma */
+		function formatDecimalLocale(value, decimals = 2) {
+		    const number = Number(value);
+		    if (!Number.isFinite(number)) return "0";
+		    return number.toFixed(decimals).replace(".", ",");
+		}
+
+		function formatDistanceKm(distanceMeters) {
+		    let km = Number(distanceMeters || 0) / 1000;
+		    return `${formatDecimalLocale(km, 2)} km`;
+		}
+
+		function formatTimeMinutes(totalSeconds) {
+		    const minutes = Math.round(Number(totalSeconds || 0) / 60);
+		    return `${minutes} min`;
+		}
+
 		/* Función para formatear la distancia: convierte metros a km con dos decimales */
 		function formatDistance(distanceMeters) {
-		    let km = distanceMeters / 1000;
-		    return km.toFixed(2) + " km";
+		    return formatDistanceKm(distanceMeters);
 		}
 
 		/* Función para formatear el tiempo.
@@ -564,16 +580,17 @@ function formatTime(totalSeconds) {
 			const existing = document.getElementById("aiRecommendationModal");
 			if (existing) existing.remove();
 
+			const darkMode = typeof window.isDarkModeEnabled === "function" && window.isDarkModeEnabled();
 			const modal = document.createElement("div");
 			modal.id = "aiRecommendationModal";
-			modal.style = "position:fixed;inset:0;background:rgba(15,23,42,0.52);display:flex;align-items:center;justify-content:center;z-index:2147483647;padding:16px;";
+			modal.style = `position:fixed;inset:0;background:${darkMode ? "rgba(2,6,23,0.75)" : "rgba(15,23,42,0.52)"};display:flex;align-items:center;justify-content:center;z-index:2147483647;padding:16px;`;
 
 			const card = document.createElement("div");
-			card.style = "position:relative;background:#ffffff;border-radius:16px;padding:16px;max-width:min(94vw,700px);width:100%;box-shadow:0 14px 38px rgba(2,6,23,0.25);";
+			card.style = `position:relative;background:${darkMode ? "#111827" : "#ffffff"};color:${darkMode ? "#e5e7eb" : "#111827"};border-radius:16px;padding:16px;max-width:min(94vw,700px);width:100%;box-shadow:0 14px 38px rgba(2,6,23,0.25);`;
 
 			const closeButton = document.createElement("button");
 			closeButton.textContent = "✖";
-			closeButton.style = "position:absolute;right:12px;top:8px;background:transparent;border:none;font-size:20px;cursor:pointer;color:#111827;";
+			closeButton.style = `position:absolute;right:12px;top:8px;background:transparent;border:none;font-size:20px;cursor:pointer;color:${darkMode ? "#e5e7eb" : "#111827"};`;
 
 			const content = document.createElement("div");
 			content.style = "display:flex;align-items:flex-end;gap:12px;padding-top:22px;";
@@ -587,7 +604,7 @@ function formatTime(totalSeconds) {
 			robotAvatar.style = "width:84px;height:84px;min-width:84px;border-radius:50%;background:#dbeafe;object-fit:cover;box-shadow:0 4px 12px rgba(30,64,175,0.15);";
 
 			const bubble = document.createElement("div");
-			bubble.style = "position:relative;flex:1;background:#eff6ff;border:1px solid #93c5fd;color:#1e3a8a;border-radius:14px;padding:14px;line-height:1.45;min-height:120px;";
+			bubble.style = `position:relative;flex:1;background:${darkMode ? "#1f2937" : "#eff6ff"};border:1px solid ${darkMode ? "#374151" : "#93c5fd"};color:${darkMode ? "#e5e7eb" : "#1e3a8a"};border-radius:14px;padding:14px;line-height:1.45;min-height:120px;`;
 
 			const bubbleTitle = document.createElement("div");
 			bubbleTitle.style = "font-weight:700;margin-bottom:6px;";
@@ -597,7 +614,7 @@ function formatTime(totalSeconds) {
 			const fullReason = String(aiRecommendation?.reason ?? t("ia_error")).trim() || t("ia_error");
 
 			const tail = document.createElement("div");
-			tail.style = "position:absolute;left:-9px;bottom:16px;width:18px;height:18px;background:#eff6ff;border-left:1px solid #93c5fd;border-bottom:1px solid #93c5fd;transform:rotate(45deg);";
+			tail.style = `position:absolute;left:-9px;bottom:16px;width:18px;height:18px;background:${darkMode ? "#1f2937" : "#eff6ff"};border-left:1px solid ${darkMode ? "#374151" : "#93c5fd"};border-bottom:1px solid ${darkMode ? "#374151" : "#93c5fd"};transform:rotate(45deg);`;
 
 			bubble.appendChild(bubbleTitle);
 			bubble.appendChild(bubbleReason);
@@ -611,11 +628,14 @@ function formatTime(totalSeconds) {
 
 			const understoodButton = document.createElement("button");
 			understoodButton.textContent = t("ia_entendido");
-			understoodButton.style = "background:#e5e7eb;color:#111827;border:none;border-radius:10px;padding:8px 12px;cursor:pointer;";
+			understoodButton.style = `background:${darkMode ? "#374151" : "#e5e7eb"};color:${darkMode ? "#e5e7eb" : "#111827"};border:none;border-radius:10px;padding:8px 12px;cursor:pointer;`;
 
 			const routeButton = document.createElement("button");
 			routeButton.textContent = t("ia_ver_ruta");
 			routeButton.style = "background:#10b981;color:#fff;border:none;border-radius:10px;padding:8px 12px;cursor:pointer;display:none;";
+			const poweredBy = document.createElement("div");
+			poweredBy.textContent = "Powered by OpenAI";
+			poweredBy.style = `font-size:11px;opacity:0.75;margin-top:8px;text-align:right;color:${darkMode ? "#9ca3af" : "#6b7280"};`;
 
 			let typingIndex = 0;
 			let mouthToggle = false;
@@ -655,6 +675,7 @@ function formatTime(totalSeconds) {
 			card.appendChild(closeButton);
 			card.appendChild(content);
 			card.appendChild(modalActions);
+			card.appendChild(poweredBy);
 			modal.appendChild(card);
 			document.body.appendChild(modal);
 		}
@@ -687,19 +708,20 @@ function formatTime(totalSeconds) {
 		}
 
 		async function renderComparisonSlickGrid(results) {
+			const darkMode = typeof window.isDarkModeEnabled === "function" && window.isDarkModeEnabled();
 		    let modal = document.createElement("div");
 		    modal.id = "comparisonModal";
 		    modal.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;";
 
 		    let modalContent = document.createElement("div");
 			const isMobile = window.innerWidth <= 768;
-			modalContent.style = `background-color:#fff;padding:20px;border-radius:8px;position:relative;box-sizing:border-box;width:${isMobile ? "95vw" : "1300px"};max-height:94vh;`;
+			modalContent.style = `background-color:${darkMode ? "#111827" : "#fff"};color:${darkMode ? "#e5e7eb" : "#111827"};padding:20px;border-radius:8px;position:relative;box-sizing:border-box;width:${isMobile ? "95vw" : "1300px"};max-height:94vh;`;
 
 		    let closeButton = document.createElement("button");
 		    closeButton.textContent = "✖";
-		    closeButton.style = "position: absolute; top: 10px; right: 10px; border: none; background: transparent; font-size: 20px; cursor: pointer; color: #000;";
+		    closeButton.style = `position: absolute; top: 10px; right: 10px; border: none; background: transparent; font-size: 20px; cursor: pointer; color: ${darkMode ? "#e5e7eb" : "#000"};`;
 		    closeButton.onmouseover = () => closeButton.style.color = "red";
-		    closeButton.onmouseout = () => closeButton.style.color = "#000";
+		    closeButton.onmouseout = () => closeButton.style.color = darkMode ? "#e5e7eb" : "#000";
 		    closeButton.onclick = () => {
 				if (document.body.contains(modal)) document.body.removeChild(modal);
 				removeFloatingAiButton();
@@ -720,6 +742,45 @@ function formatTime(totalSeconds) {
 				style = document.createElement("style");
 				style.id = "comparison-grid-style";
 				style.textContent = `
+				#comparisonModal .slick-header-columns {
+					background: #f3f4f6 !important;
+				}
+				#comparisonModal .slick-row,
+				#comparisonModal .slick-cell,
+				#comparisonModal .slick-header-column {
+					color: #111827 !important;
+				}
+				#comparisonModal .slick-cell {
+					background: #ffffff !important;
+				}
+				#comparisonModal.dark-mode .slick-header-columns {
+					background: #1f2937 !important;
+				}
+				#comparisonModal.dark-mode .slick-row,
+				#comparisonModal.dark-mode .slick-cell,
+				#comparisonModal.dark-mode .slick-header-column {
+					color: #e5e7eb !important;
+				}
+				#comparisonModal.dark-mode .slick-cell {
+					background: #0f172a !important;
+					border-color: #334155 !important;
+				}
+				#comparisonModal .ver-ruta-link {
+					color: #1d4ed8 !important;
+					text-decoration: underline;
+				}
+				#comparisonModal.dark-mode .ver-ruta-link {
+					color: #93c5fd !important;
+				}
+				#comparisonModal.dark-mode .ia-recommended-cell,
+				#comparisonModal.dark-mode .ia-recommended-cell--mode {
+					background: #22c55e !important;
+					color: #052e16 !important;
+				}
+				#comparisonModal.dark-mode .ia-recommended-cell .ver-ruta-link {
+					color: #14532d !important;
+					font-weight: 700 !important;
+				}
 			    .slick-header-column {
 			        height: 40px !important;
 			        line-height: 40px !important;
@@ -738,6 +799,7 @@ function formatTime(totalSeconds) {
 			`;
 				document.head.appendChild(style);
 			}
+			modal.classList.toggle("dark-mode", darkMode);
 		    document.body.appendChild(modal);
 
 
@@ -754,7 +816,7 @@ function formatTime(totalSeconds) {
 			    field: "route",
 			    width: 110,
 			    formatter: (row, cell, value, columnDef, dataContext) => {
-			      return value !== "-" ? `<span style='cursor:pointer;color:blue;text-decoration:underline;'>${tt("ver_ruta")}</span>` : "-";
+			      return value !== "-" ? `<span class='ver-ruta-link' style='cursor:pointer;'>${tt("ver_ruta")}</span>` : "-";
 			    }
 			  }
 			];
@@ -784,16 +846,16 @@ function formatTime(totalSeconds) {
 		            route: "-"
 		        } : {
 		            mode: modeTranslations[idiomaActual][item.mode] || item.mode,
-		            distance: item.totalDistance ? `${(item.totalDistance / 1000).toFixed(2)} km` : "-",
+		            distance: item.totalDistance ? formatDistanceKm(item.totalDistance) : "-",
                             time: item.totalTime ? formatGridTime(item.totalTime) : "-",
-		            co2: item.co2 ? item.co2.toFixed(2) : "0",
+		            co2: Number.isFinite(item.co2) ? formatDecimalLocale(item.co2, 2) : "0,00",
 		            detail: groupSubRoutes(item.subRoutes, item.mode),
 		            route: item
 		        };
 		    });
 			
 
-		    data.sort((a, b) => parseFloat(a.co2 || 0) - parseFloat(b.co2 || 0));
+		    data.sort((a, b) => parseFloat(String(a.co2 || 0).replace(",", ".")) - parseFloat(String(b.co2 || 0).replace(",", ".")));
 
 		    var grid = new Slick.Grid("#gridContainer", data, columns, options);
 
@@ -878,8 +940,8 @@ function formatTime(totalSeconds) {
 		                valA = timeToSeconds(valA);
 		                valB = timeToSeconds(valB);
 		            } else if (field === "co2" || field === "distance") {
-		                valA = parseFloat(valA) || 0;
-		                valB = parseFloat(valB) || 0;
+		                valA = parseFloat(String(valA).replace(",", ".")) || 0;
+		                valB = parseFloat(String(valB).replace(",", ".")) || 0;
 		            }
 
 		            return isAscending ? valA - valB : valB - valA;
@@ -945,26 +1007,13 @@ function formatTime(totalSeconds) {
                 // Formatear el tiempo mostrado en la tabla SlickGrid
                 // Si supera los 60 minutos, se convierte a horas y minutos
                 function formatGridTime(totalSeconds) {
-                    let minutes = Math.round(totalSeconds / 60);
-                    if (minutes >= 60) {
-                        let hours = Math.floor(minutes / 60);
-                        let remaining = minutes % 60;
-                        return `${hours}h ${remaining}min`;
-                    }
-                    return `${minutes}min`;
+                    return formatTimeMinutes(totalSeconds);
                 }
 
 function timeToSeconds(timeStr) {
     if (!timeStr) return 0;
-    let parts = String(timeStr).trim().split(" ");
-    let minutes = 0, seconds = 0;
-    if (parts.length === 2) {
-        minutes = parseInt(parts[0], 10);
-        seconds = parseInt(parts[1], 10);
-    } else {
-        seconds = parseInt(parts[0], 10);
-    }
-    return (minutes * 60) + seconds;
+    const minutes = parseFloat(String(timeStr).replace(",", "."));
+    return Number.isFinite(minutes) ? minutes * 60 : 0;
 }
 
         
@@ -1818,25 +1867,26 @@ function muestraRutaTaxi(){
 
   if (modeType === "PATINETE") totalDuration *= 0.78;
 
+  const darkMode = typeof window.isDarkModeEnabled === "function" && window.isDarkModeEnabled();
   const modal = document.createElement("div");
   modal.id = "googleMapsModal";
-  modal.style = `position:fixed;${window.innerWidth<=758?"top:10vh;left:5vw;width:90vw;font-size:4vw;":"top:10vh;right:20px;width:390px;font-size:16px;"}max-height:80vh;background:white;z-index:10000;overflow-y:auto;box-shadow:0 8px 16px rgba(0,0,0,0.25);border-radius:12px;padding:20px;font-family:Arial,sans-serif;`;
+  modal.style = `position:fixed;${window.innerWidth<=758?"top:10vh;left:5vw;width:90vw;font-size:4vw;":"top:10vh;right:20px;width:390px;font-size:16px;"}max-height:80vh;background:${darkMode ? "#0f172a" : "white"};color:${darkMode ? "#e5e7eb" : "#111827"};z-index:10000;overflow-y:auto;box-shadow:0 8px 16px rgba(0,0,0,0.25);border-radius:12px;padding:20px;font-family:Arial,sans-serif;`;
 
   modal.innerHTML = `
     <button id="closeModal" style="position:absolute;top:10px;right:10px;width:30px;height:30px;background:#ef4444;color:white;border:none;border-radius:50%;font-size:20px;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;">&times;</button>
-    <h2 style="margin-bottom:15px;border-bottom:2px solid #10b981;padding-bottom:5px;color:#333;">${td("detalle_tramos")}</h2>
+    <h2 style="margin-bottom:15px;border-bottom:2px solid #10b981;padding-bottom:5px;color:${darkMode ? "#e5e7eb" : "#333"};">${td("detalle_tramos")}</h2>
     <div style="margin-bottom:15px;line-height:1.6;">
-      <p><strong>${td("distancia_total")}:</strong> ${(totalDistance/1000).toFixed(2)} km</p>
-      <p><strong>${td("tiempo_total")}:</strong> ${(totalDuration/60).toFixed(0)} mins</p>
-      <p><strong>${td("co2_total")}:</strong> ${totalEmissions.toFixed(2)} g</p>
+      <p><strong>${td("distancia_total")}:</strong> ${formatDistanceKm(totalDistance)}</p>
+      <p><strong>${td("tiempo_total")}:</strong> ${formatTimeMinutes(totalDuration)}</p>
+      <p><strong>${td("co2_total")}:</strong> ${formatDecimalLocale(totalEmissions, 2)} g</p>
     </div>
-    <h3 style="margin-bottom:10px;color:#555;">${td("detalle_tramos2")}</h3>
+    <h3 style="margin-bottom:10px;color:${darkMode ? "#cbd5e1" : "#555"};">${td("detalle_tramos2")}</h3>
     ${Object.keys(travelModes).map(modeKey => `
-      <div style="background:#f9fafb;margin-bottom:10px;padding:10px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.1);">
+      <div style="background:${darkMode ? "#1f2937" : "#f9fafb"};margin-bottom:10px;padding:10px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.1);">
         <p><strong>${tt("modo")}:</strong> ${modeTranslations[modeKey] || modeMap[modeKey] || modeKey}</p>
-        <p><strong>${tt("distancia")}:</strong> ${(travelModes[modeKey].distance/1000).toFixed(2)} km</p>
-        <p><strong>${tt("tiempo")}:</strong> ${(travelModes[modeKey].duration/60).toFixed(0)} mins</p>
-        <p><strong>${tt("co2")}:</strong> ${travelModes[modeKey].emissions.toFixed(2)} g</p>
+        <p><strong>${tt("distancia")}:</strong> ${formatDistanceKm(travelModes[modeKey].distance)}</p>
+        <p><strong>${tt("tiempo")}:</strong> ${formatTimeMinutes(travelModes[modeKey].duration)}</p>
+        <p><strong>${tt("co2")}:</strong> ${formatDecimalLocale(travelModes[modeKey].emissions, 2)} g</p>
       </div>`).join('')}`;
 
   document.body.appendChild(modal);
