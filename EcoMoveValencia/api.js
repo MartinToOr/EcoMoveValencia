@@ -334,6 +334,13 @@ app.post('/api/recommend-transport', async (req, res) => {
         contextoUsuario: userContext || 'Sin contexto adicional',
         candidatos: candidates
     };
+    const formatNumberEs = (value, decimals = 2) => Number(value || 0).toFixed(decimals).replace('.', ',');
+    const enrichCandidateForPrompt = (candidate) => ({
+        ...candidate,
+        distanceKm: formatNumberEs(candidate.totalDistance / 1000, 2),
+        timeMinutes: String(Math.round(candidate.totalTime / 60)),
+        co2Grams: formatNumberEs(candidate.co2, 2)
+    });
 
 
     const minMax = (values) => ({ min: Math.min(...values), max: Math.max(...values) });
@@ -462,7 +469,9 @@ Reglas:
 7) Usa modeLabel para nombrar los modos cuando exista.
 8) Nunca escribas el typo "BYCICLING".
 9) Para rutas largas (más de 6-7 km), evita sobrepriorizar micromovilidad (bici, Valenbisi, patinete) salvo que los datos lo justifiquen claramente.
-10) Cierra la explicación con una frase breve indicando si conviene transporte público y cuál sería la mejor alternativa de transporte público según los datos (si existe).`;
+10) Cierra la explicación con una frase breve indicando si conviene transporte público y cuál sería la mejor alternativa de transporte público según los datos (si existe).
+11) Expresa SIEMPRE tiempos en minutos (min) y distancias en kilómetros (km).
+12) Usa coma como separador decimal en CO2 (g) y cualquier métrica decimal (ej. 102,63 g; 5,43 km).`;
 
             const tieTolerance = 1e-9;
             const rankingTiempo = [...candidates]
@@ -491,14 +500,14 @@ Reglas:
             const explanationPrompt = {
                 ...userPrompt,
                 idiomaRespuesta: responseLanguage,
-                modoRecomendadoFijo: toLabeledCandidate(recommendedCandidate),
-                mejorTiempo: toLabeledCandidate(bestByTime),
-                mejorEmisiones: toLabeledCandidate(bestByCo2),
-                mejorDistancia: toLabeledCandidate(bestByDistance),
-                rankingTiempo: rankingTiempo.map(toLabeledCandidate),
-                rankingEmisiones: rankingEmisiones.map(toLabeledCandidate),
-                rankingDistancia: rankingDistancia.map(toLabeledCandidate),
-                mejorTransportePublico: bestPublicTransport ? toLabeledCandidate(bestPublicTransport) : null,
+                modoRecomendadoFijo: enrichCandidateForPrompt(toLabeledCandidate(recommendedCandidate)),
+                mejorTiempo: enrichCandidateForPrompt(toLabeledCandidate(bestByTime)),
+                mejorEmisiones: enrichCandidateForPrompt(toLabeledCandidate(bestByCo2)),
+                mejorDistancia: enrichCandidateForPrompt(toLabeledCandidate(bestByDistance)),
+                rankingTiempo: rankingTiempo.map(toLabeledCandidate).map(enrichCandidateForPrompt),
+                rankingEmisiones: rankingEmisiones.map(toLabeledCandidate).map(enrichCandidateForPrompt),
+                rankingDistancia: rankingDistancia.map(toLabeledCandidate).map(enrichCandidateForPrompt),
+                mejorTransportePublico: bestPublicTransport ? enrichCandidateForPrompt(toLabeledCandidate(bestPublicTransport)) : null,
                 empates: {
                     tiempo: empateTiempo.map(mode => ({ mode, modeLabel: labelByMode[mode] || mode })),
                     emisiones: empateEmisiones.map(mode => ({ mode, modeLabel: labelByMode[mode] || mode })),
