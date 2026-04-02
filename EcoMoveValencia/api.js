@@ -648,10 +648,9 @@ async function loadValenBisiFromCityBikes() {
 
 async function refreshValenBisiStations() {
     const sources = [
-
-        { name: "GeoPortal", loader: loadValenBisiFromGeoPortal },
-        { name: "OpenDataSoft", loader: loadValenBisiFromOpenDataSoft },
-        { name: "CityBikes", loader: loadValenBisiFromCityBikes }
+        { name: "GeoPortal", loader: loadValenBisiFromGeoPortal }
+        // { name: "OpenDataSoft", loader: loadValenBisiFromOpenDataSoft },
+        // { name: "CityBikes", loader: loadValenBisiFromCityBikes }
     ];
 
     for (const source of sources) {
@@ -876,22 +875,37 @@ async function fetchAndConcatBUSData() {
 
 
 async function fetchAndConcatRodaliaData() {
-    const urlsRodalia = [
-		"https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/estacions-rodalia-valencia-val/records?limit=100",		        
-        "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/estacions-rodalia-valencia-val/records?limit=100&offset=100"
-    ];
+    const rodaliaGeoJsonUrl = "https://opendata.vlci.valencia.es/dataset/2151d7f2-168f-47aa-a83d-ab3b59f7f576/resource/9eb47290-f6af-413a-b366-cbfb645aad73/download/estacions-rodalia-valencia-val.geojson";
 
     try {
-        // Hacer las solicitudes en paralelo
-        const responses = await Promise.all(urlsRodalia.map(url => fetch(url)));
+        const geoJsonData = await fetchJsonSafe(rodaliaGeoJsonUrl);
+        const features = geoJsonData?.features || [];
 
-        // Convertir las respuestas a JSON
-        const data = await Promise.all(responses.map(res => res.json()));
+        stationRodaliaUsage = features
+            .filter(feature =>
+                Array.isArray(feature?.geometry?.coordinates) &&
+                feature.geometry.coordinates.length >= 2
+            )
+            .map(feature => {
+                const props = feature.properties || {};
+                return {
+                    geo_point_2d: {
+                        lon: Number(feature.geometry.coordinates[0]),
+                        lat: Number(feature.geometry.coordinates[1])
+                    },
+                    codi: props.codi || "",
+                    descripci: props.descripci || "Estación desconocida",
+                    latitud: props.latitud || "",
+                    longitud: props.longitud || "",
+                    direcci: props.direcci || ""
+                };
+            })
+            .filter(station =>
+                Number.isFinite(station.geo_point_2d.lat) &&
+                Number.isFinite(station.geo_point_2d.lon)
+            );
 
-        // Concatenar correctamente todos los resultados
-        //stationBusUsage = data.flat();  // Si el JSON devuelve un array directamente
-         stationRodaliaUsage = data.map(d => d.results).flat();  // Si los datos vienen en `results`
-        
+        console.log(`Rodalia cargado desde OpenData VLCI: ${stationRodaliaUsage.length} estaciones.`);
     
     } catch (error) {
         console.error("Error al obtener los datos: ", error);
