@@ -802,7 +802,7 @@ function formatTime(totalSeconds) {
 			    field: "route",
 			    width: 110,
 			    formatter: (row, cell, value, columnDef, dataContext) => {
-			      return value !== "-" ? `<span style='cursor:pointer;color:blue;text-decoration:underline;'>${tt("ver_ruta")}</span>` : "-";
+			      return value !== "-" ? `<span class='ver-ruta-link' style='cursor:pointer;'>${tt("ver_ruta")}</span>` : "-";
 			    }
 			  }
 			];

@@ -763,6 +763,7 @@ body.dark-mode .leaflet-popup-tip {
   <img src="img/val.jpg" alt="Valenciano" class="bandera val">
   <img src="img/en.png" alt="English" class="bandera en">
 </div>
+<button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Cambiar tema"></button>
 
 <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Cambiar tema"></button>
 
@@ -1496,6 +1497,11 @@ refreshThemeButton();
             img.style.height = "60px";
             img.style.borderRadius = "10px";
             img.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.2)";
+            if (boton.clave === "Valenbisi" && darkMode) {
+            	img.style.background = "#0f172a";
+            	img.style.padding = "4px";
+            	img.style.border = "1px solid #374151";
+            }
             
             let texto = document.createElement("span");
             texto.innerText = modeTranslations[idiomaActual][boton.clave] || modeMap[boton.valor] || boton.valor;
