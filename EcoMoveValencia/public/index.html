@@ -175,6 +175,7 @@
     top: 3%;
     right: 220px;
     z-index: 1000;
+
     background-color: #ffffff;
     background-image: url("img/luna.png");
     background-repeat: no-repeat;
@@ -196,15 +197,18 @@
     border-color: #4b5563;
 }
 
+
 body.dark-mode {
     background: #0b1220;
     color: #e5e7eb;
 }
 
+
 body.dark-mode .logo {
     opacity: 1;
     filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.35));
 }
+
 
 body.dark-mode .distance-info,
 body.dark-mode .idiomdiv,
@@ -759,7 +763,9 @@ body.dark-mode .leaflet-popup-tip {
   <img src="img/val.jpg" alt="Valenciano" class="bandera val">
   <img src="img/en.png" alt="English" class="bandera en">
 </div>
+
 <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Cambiar tema"></button>
+
 
    <!-- Select nativo oculto (para accesibilidad) -->
   <select id="transport-select" class="native-select">
@@ -1290,7 +1296,9 @@ applyMapTheme(savedTheme);
 const themeToggleBtn = document.getElementById("themeToggleBtn");
 function refreshThemeButton() {
     const darkEnabled = window.isDarkModeEnabled();
+
     themeToggleBtn.classList.toggle("is-dark", darkEnabled);
+
 }
 themeToggleBtn.addEventListener("click", () => {
     const darkEnabled = document.body.classList.toggle("dark-mode");

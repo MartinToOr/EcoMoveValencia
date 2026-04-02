@@ -717,11 +717,13 @@ function formatTime(totalSeconds) {
 			const isMobile = window.innerWidth <= 768;
 			modalContent.style = `background-color:${darkMode ? "#111827" : "#fff"};color:${darkMode ? "#e5e7eb" : "#111827"};padding:20px;border-radius:8px;position:relative;box-sizing:border-box;width:${isMobile ? "95vw" : "1300px"};max-height:94vh;`;
 
+
 		    let closeButton = document.createElement("button");
 		    closeButton.textContent = "✖";
 		    closeButton.style = `position: absolute; top: 10px; right: 10px; border: none; background: transparent; font-size: 20px; cursor: pointer; color: ${darkMode ? "#e5e7eb" : "#000"};`;
 		    closeButton.onmouseover = () => closeButton.style.color = "red";
 		    closeButton.onmouseout = () => closeButton.style.color = darkMode ? "#e5e7eb" : "#000";
+
 		    closeButton.onclick = () => {
 				if (document.body.contains(modal)) document.body.removeChild(modal);
 				removeFloatingAiButton();
