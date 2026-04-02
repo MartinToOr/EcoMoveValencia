@@ -813,6 +813,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectIcon = document.getElementById('select-icon');
     const options = document.querySelectorAll('.custom-select-option');
     
+    function updateHeaderIconFromOption(optionElement) {
+      if (!optionElement) return;
+      const optionIcon = optionElement.querySelector('i[data-lucide]');
+      const headerIcon = document.querySelector('#select-header .flex i[data-lucide]');
+      if (optionIcon && headerIcon) {
+        headerIcon.setAttribute('data-lucide', optionIcon.getAttribute('data-lucide'));
+      }
+    }
+
+    function closeSelect() {
+      selectOptions.style.display = 'none';
+      selectIcon.setAttribute('data-lucide', 'chevron-up');
+      lucide.createIcons();
+    }
+
     // Función para abrir/cerrar el selector
     function toggleSelect() {
       const isOpen = selectOptions.style.display === 'block';
@@ -827,9 +842,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Cerrar al hacer clic fuera del selector
     document.addEventListener('click', function(event) {
       if (!event.target.closest('.custom-select-container')) {
-        selectOptions.style.display = 'none';
-        selectIcon.setAttribute('data-lucide', 'chevron-up');
-        lucide.createIcons();
+        closeSelect();
       }
     });
     
@@ -848,13 +861,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Actualizar el texto seleccionado
         selectedOptionText.textContent = text;
+        updateHeaderIconFromOption(this);
         
         // Actualizar la clase selected
         options.forEach(opt => opt.classList.remove('selected'));
         this.classList.add('selected');
         
         // Cerrar el selector
-        toggleSelect();
+        closeSelect();
         
         // Aquí puedes añadir código para cambiar la vista del mapa
         console.log('Seleccionado:', value);
@@ -863,6 +877,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Invertir el icono inicial ya que ahora se despliega hacia arriba
     selectIcon.setAttribute('data-lucide', 'chevron-up');
+    updateHeaderIconFromOption(document.querySelector('.custom-select-option.selected'));
     lucide.createIcons();
   });
 

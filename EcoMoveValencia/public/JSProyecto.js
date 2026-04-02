@@ -2157,12 +2157,17 @@ function muestraRutaDesdeTabla(respuesta){
 		function sincronizarSelectorPersonalizado(value) {
 		    const opciones = document.querySelectorAll('.custom-select-option');
 		    const textoSeleccionado = document.getElementById('selected-option-text');
+		    const iconoCabecera = document.querySelector('#select-header .flex i[data-lucide]');
 
 
 		    opciones.forEach(opcion => {
 		        if (opcion.getAttribute('data-value') === value) {
 		            opcion.classList.add('selected');
 		            textoSeleccionado.textContent = opcion.querySelector('span').textContent;
+		            const iconoOpcion = opcion.querySelector('i[data-lucide]');
+		            if (iconoOpcion && iconoCabecera) {
+		                iconoCabecera.setAttribute('data-lucide', iconoOpcion.getAttribute('data-lucide'));
+		            }
 
 
 		        } else {
