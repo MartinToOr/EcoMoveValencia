@@ -175,20 +175,40 @@
     top: 3%;
     right: 220px;
     z-index: 1000;
-    background: #ffffff;
-    color: #111827;
+
+    background-color: #ffffff;
+    background-image: url("img/luna.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 18px 18px;
     border: 1px solid #d1d5db;
-    border-radius: 9999px;
-    padding: 8px 12px;
-    font-size: 13px;
-    font-weight: 600;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    font-size: 0;
+    line-height: 0;
     cursor: pointer;
 }
+
+.theme-toggle-btn.is-dark {
+    background-image: url("img/sol.png");
+    background-color: #111827;
+    border-color: #4b5563;
+}
+
 
 body.dark-mode {
     background: #0b1220;
     color: #e5e7eb;
 }
+
+
+body.dark-mode .logo {
+    opacity: 1;
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.35));
+}
+
 
 body.dark-mode .distance-info,
 body.dark-mode .idiomdiv,
@@ -743,7 +763,9 @@ body.dark-mode .leaflet-popup-tip {
   <img src="img/val.jpg" alt="Valenciano" class="bandera val">
   <img src="img/en.png" alt="English" class="bandera en">
 </div>
-<button id="themeToggleBtn" class="theme-toggle-btn">🌙 Modo oscuro</button>
+
+<button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Cambiar tema"></button>
+
 
    <!-- Select nativo oculto (para accesibilidad) -->
   <select id="transport-select" class="native-select">
@@ -1274,7 +1296,9 @@ applyMapTheme(savedTheme);
 const themeToggleBtn = document.getElementById("themeToggleBtn");
 function refreshThemeButton() {
     const darkEnabled = window.isDarkModeEnabled();
-    themeToggleBtn.textContent = darkEnabled ? "☀️ Modo claro" : "🌙 Modo oscuro";
+
+    themeToggleBtn.classList.toggle("is-dark", darkEnabled);
+
 }
 themeToggleBtn.addEventListener("click", () => {
     const darkEnabled = document.body.classList.toggle("dark-mode");
@@ -1384,6 +1408,7 @@ refreshThemeButton();
     });
     
     function seleccionaOpcionTransporte() {
+        const darkMode = typeof window.isDarkModeEnabled === "function" && window.isDarkModeEnabled();
         // Crear el modal
         let modal = document.createElement("div");
         modal.style.position = "fixed";
@@ -1391,7 +1416,7 @@ refreshThemeButton();
         modal.style.left = "0";
         modal.style.width = "100%";
         modal.style.height = "100%";
-        modal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+        modal.style.backgroundColor = darkMode ? "rgba(2, 6, 23, 0.78)" : "rgba(0, 0, 0, 0.5)";
         modal.style.display = "flex";
         modal.style.justifyContent = "center";
         modal.style.alignItems = "center";
@@ -1399,7 +1424,8 @@ refreshThemeButton();
         modal.style.animation = "fadeIn 0.3s ease-in-out";
 
         let modalContent = document.createElement("div");
-        modalContent.style.background = "#fff";
+        modalContent.style.background = darkMode ? "#111827" : "#fff";
+        modalContent.style.color = darkMode ? "#e5e7eb" : "#111827";
         modalContent.style.padding = "20px";
         modalContent.style.borderRadius = "10px";
         modalContent.style.textAlign = "center";
@@ -1418,6 +1444,7 @@ refreshThemeButton();
         	} 
         let title = document.createElement("h3");
         title.innerText = tm("selecciona_transporte");
+        title.style.color = darkMode ? "#f3f4f6" : "#111827";
 
         modalContent.appendChild(title);
 
@@ -1473,6 +1500,7 @@ refreshThemeButton();
             let texto = document.createElement("span");
             texto.innerText = modeTranslations[idiomaActual][boton.clave] || modeMap[boton.valor] || boton.valor;
             texto.style.marginTop = "5px";
+            texto.style.color = darkMode ? "#e5e7eb" : "#111827";
 
             btn.appendChild(img);
             btn.appendChild(texto);
@@ -1516,6 +1544,7 @@ refreshThemeButton();
         let textoComparar = document.createElement("span");
         textoComparar.innerText = t("comparar");
         textoComparar.style.marginLeft = "10px";
+        textoComparar.style.color = darkMode ? "#e5e7eb" : "#111827";
         
         comparacion.appendChild(imgComparar);
         comparacion.appendChild(textoComparar);

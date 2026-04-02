@@ -717,11 +717,13 @@ function formatTime(totalSeconds) {
 			const isMobile = window.innerWidth <= 768;
 			modalContent.style = `background-color:${darkMode ? "#111827" : "#fff"};color:${darkMode ? "#e5e7eb" : "#111827"};padding:20px;border-radius:8px;position:relative;box-sizing:border-box;width:${isMobile ? "95vw" : "1300px"};max-height:94vh;`;
 
+
 		    let closeButton = document.createElement("button");
 		    closeButton.textContent = "✖";
 		    closeButton.style = `position: absolute; top: 10px; right: 10px; border: none; background: transparent; font-size: 20px; cursor: pointer; color: ${darkMode ? "#e5e7eb" : "#000"};`;
 		    closeButton.onmouseover = () => closeButton.style.color = "red";
-		    closeButton.onmouseout = () => closeButton.style.color = "#000";
+		    closeButton.onmouseout = () => closeButton.style.color = darkMode ? "#e5e7eb" : "#000";
+
 		    closeButton.onclick = () => {
 				if (document.body.contains(modal)) document.body.removeChild(modal);
 				removeFloatingAiButton();
@@ -742,6 +744,29 @@ function formatTime(totalSeconds) {
 				style = document.createElement("style");
 				style.id = "comparison-grid-style";
 				style.textContent = `
+				#comparisonModal .slick-header-columns {
+					background: #f3f4f6 !important;
+				}
+				#comparisonModal .slick-row,
+				#comparisonModal .slick-cell,
+				#comparisonModal .slick-header-column {
+					color: #111827 !important;
+				}
+				#comparisonModal .slick-cell {
+					background: #ffffff !important;
+				}
+				#comparisonModal.dark-mode .slick-header-columns {
+					background: #1f2937 !important;
+				}
+				#comparisonModal.dark-mode .slick-row,
+				#comparisonModal.dark-mode .slick-cell,
+				#comparisonModal.dark-mode .slick-header-column {
+					color: #e5e7eb !important;
+				}
+				#comparisonModal.dark-mode .slick-cell {
+					background: #0f172a !important;
+					border-color: #334155 !important;
+				}
 			    .slick-header-column {
 			        height: 40px !important;
 			        line-height: 40px !important;
@@ -760,6 +785,7 @@ function formatTime(totalSeconds) {
 			`;
 				document.head.appendChild(style);
 			}
+			modal.classList.toggle("dark-mode", darkMode);
 		    document.body.appendChild(modal);
 
 
