@@ -62,6 +62,12 @@ app.use(express.json()); // Asegura que el body se maneje como JSON
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Endpoint para proporcionar la clave de Google Maps al cliente
+app.get('/api/google-maps-key', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.json({ apiKey });
+});
+
 async function nominatimSearch(params) {
     await waitForNominatimSlot();
     const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
