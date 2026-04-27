@@ -58,8 +58,8 @@
     }
     .theme-toggle-btn {
       position: absolute;
-      top: 3%;
-      right: 190px;
+      top: 3.5%;
+      right: 202px;
       z-index: 1000;
       width: 38px;
       height: 38px;
@@ -72,10 +72,6 @@
     .theme-toggle-btn.is-dark {
       background-color: #111827;
       border-color: #4b5563;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23f8fafc' d='M20.742 13.045A9 9 0 1 1 10.955 3.258a1 1 0 0 1 1.087 1.32A7 7 0 1 0 19.42 11.958a1 1 0 0 1 1.322 1.087z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: center;
-      background-size: 18px 18px;
     }
     .theme-toggle-icon {
       width: 18px;
@@ -231,6 +227,11 @@ body.dark-mode .bar-track {
 
 /* Adaptación móvil */
 @media (max-width: 768px) {
+  .theme-toggle-btn {
+    top: 2.5vh;
+    right: 38vw;
+  }
+
   .bar-line {
     flex-direction: column;
     align-items: center;
@@ -266,7 +267,7 @@ body.dark-mode .bar-track {
     <img id="themeToggleIconInfo" class="theme-toggle-icon" src="img/sol.svg" alt="">
   </button>
   <!-- Logo -->
-  <img src="img/logo1.png" alt="Logo" class="logo">
+  <a href="index.html"><img src="img/logo1.png" alt="Logo" class="logo"></a>
   <div class="container">
     <h1 id="titulo"></h1>
     <h2 id="contexto-titulo"></h2>
