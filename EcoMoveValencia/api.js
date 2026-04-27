@@ -758,6 +758,35 @@ async function fetchAndConcatMetroData() {
 	    "Marítim"
 	]);
 
+    const estacionesMetroManuales = [
+        { nombre: "Mislata", linea: "3,5,9", geo_point_2d: { lat: 39.47397712257625, lon: -0.4180735902294505 } },
+        { nombre: "Nou d'Octubre", linea: "3,5,9", geo_point_2d: { lat: 39.47039849450896, lon: -0.4061707585077229 } },
+        { nombre: "Xàtiva", linea: "3,5,7,9", geo_point_2d: { lat: 39.4676039500255, lon: -0.3768585523957381 } },
+        { nombre: "Àngel Guimerà", linea: "1,2,3,5,9", geo_point_2d: { lat: 39.47003489072011, lon: -0.386960698968137 } },
+        { nombre: "Av. del Cid", linea: "3,5,9", geo_point_2d: { lat: 39.468564784795085, lon: -0.3984359700115798 } },
+        { nombre: "Colón", linea: "3,5,7,9", geo_point_2d: { lat: 39.47013788930031, lon: -0.37091707511149846 } },
+        { nombre: "Alameda", linea: "3,5,7,9", geo_point_2d: { lat: 39.47354999573717, lon: -0.3654445708817468 } },
+        { nombre: "Facultats - Manuel Broseta", linea: "3,9", geo_point_2d: { lat: 39.47825353393549, lon: -0.36186986161796886 } },
+        { nombre: "Benimaclet", linea: "3,9", geo_point_2d: { lat: 39.48480296922859, lon: -0.3623349267938646 } },
+        { nombre: "Machado", linea: "3,9", geo_point_2d: { lat: 39.49270143254514, lon: -0.3585859013154008 } },
+        { nombre: "Alboraia Palmaret", linea: "3,9", geo_point_2d: { lat: 39.49566660101209, lon: -0.3551640278111203 } },
+        { nombre: "Alboraia Peris Aragó", linea: "3,9", geo_point_2d: { lat: 39.50072627305551, lon: -0.3523538858226942 } },
+        { nombre: "Almàssera", linea: "3", geo_point_2d: { lat: 39.5122367702251, lon: -0.3542803613068804 } },
+        { nombre: "Meliana", linea: "3", geo_point_2d: { lat: 39.5280475250364, lon: -0.3518252052197128 } },
+        { nombre: "Foios", linea: "3", geo_point_2d: { lat: 39.5371795964571, lon: -0.3537629125895682 } },
+        { nombre: "Albalat dels Sorells", linea: "3", geo_point_2d: { lat: 39.5452963785407, lon: -0.34798241139925223 } },
+        { nombre: "Museros", linea: "3", geo_point_2d: { lat: 39.56158279986902, lon: -0.34092538303573666 } },
+        { nombre: "Massamagrell", linea: "3", geo_point_2d: { lat: 39.57041126815168, lon: -0.3328856024043982 } },
+        { nombre: "La Pobla de Farnals", linea: "3", geo_point_2d: { lat: 39.57883974796188, lon: -0.3300435225757946 } }
+    ];
+
+    const normalizeStationName = (name) =>
+        String(name || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, "");
+
     try {
         let combinedResults = [];
         try {
@@ -812,6 +841,35 @@ async function fetchAndConcatMetroData() {
             estacion.linea = lineas.sort().join(',');
             return estacion;
         });
+
+        const stationsByName = new Map(
+            combinedResults.map(estacion => [normalizeStationName(estacion.nombre), estacion])
+        );
+
+        for (const manualStation of estacionesMetroManuales) {
+            const key = normalizeStationName(manualStation.nombre);
+            const existingStation = stationsByName.get(key);
+            if (!existingStation) {
+                combinedResults.push(manualStation);
+                stationsByName.set(key, manualStation);
+                continue;
+            }
+
+            const existingLines = new Set(
+                String(existingStation.linea || "")
+                    .split(",")
+                    .map(l => l.trim())
+                    .filter(Boolean)
+            );
+
+            String(manualStation.linea || "")
+                .split(",")
+                .map(l => l.trim())
+                .filter(Boolean)
+                .forEach(linea => existingLines.add(linea));
+
+            existingStation.linea = Array.from(existingLines).sort().join(",");
+        }
 
         stationUsage = combinedResults;
     } catch (error) {
