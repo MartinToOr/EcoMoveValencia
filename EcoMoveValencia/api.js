@@ -62,6 +62,20 @@ app.use(express.json()); // Asegura que el body se maneje como JSON
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+async function nominatimSearch(params) {
+    const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+    const response = await fetch(url, {
+        headers: {
+            "User-Agent": "EcoMoveValencia/1.0 (geocoding)",
+            "Accept-Language": "es"
+        }
+    });
+    if (!response.ok) {
+        throw new Error(`Nominatim respondió con estado ${response.status}`);
+    }
+    return response.json();
+}
+
 app.get('/api/geocode', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     const address = (req.query.address || "").toString().trim();
@@ -70,7 +84,7 @@ app.get('/api/geocode', async (req, res) => {
     }
 
     try {
-        const params = new URLSearchParams({
+        const boundedParams = new URLSearchParams({
             q: address,
             format: "jsonv2",
             limit: "1",
@@ -78,18 +92,18 @@ app.get('/api/geocode', async (req, res) => {
             bounded: "1",
             viewbox: "-0.75,39.9,0.1,39.0"
         });
-        const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
-        const response = await fetch(url, {
-            headers: {
-                "User-Agent": "EcoMoveValencia/1.0 (geocoding)"
-            }
-        });
+        let data = await nominatimSearch(boundedParams);
 
-        if (!response.ok) {
-            return res.status(502).json({ error: "Error al consultar el geocodificador" });
+        if (!Array.isArray(data) || data.length === 0) {
+            const fallbackParams = new URLSearchParams({
+                q: `${address}, Valencia`,
+                format: "jsonv2",
+                limit: "1",
+                countrycodes: "es"
+            });
+            data = await nominatimSearch(fallbackParams);
         }
 
-        const data = await response.json();
         const first = Array.isArray(data) ? data[0] : null;
         if (!first) {
             return res.status(404).json({ error: "No se encontraron resultados" });
@@ -108,6 +122,37 @@ app.get('/api/geocode', async (req, res) => {
         });
     } catch (error) {
         console.error("Error en /api/geocode:", error);
+        return res.status(500).json({ error: "Error interno del servidor" });
+    }
+});
+
+app.get('/api/geocode/suggest', async (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    const query = (req.query.q || "").toString().trim();
+    if (query.length < 3) {
+        return res.json([]);
+    }
+
+    try {
+        const params = new URLSearchParams({
+            q: `${query}, Valencia`,
+            format: "jsonv2",
+            limit: "5",
+            countrycodes: "es",
+            addressdetails: "1"
+        });
+        const data = await nominatimSearch(params);
+        const suggestions = (Array.isArray(data) ? data : [])
+            .map(item => ({
+                displayName: item.display_name,
+                lat: Number(item.lat),
+                lng: Number(item.lon)
+            }))
+            .filter(item => Number.isFinite(item.lat) && Number.isFinite(item.lng) && item.displayName);
+
+        return res.json(suggestions);
+    } catch (error) {
+        console.error("Error en /api/geocode/suggest:", error);
         return res.status(500).json({ error: "Error interno del servidor" });
     }
 });

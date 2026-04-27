@@ -2534,14 +2534,68 @@ function muestraRutaDesdeTabla(respuesta){
 
 const originInput = document.getElementById("origin-input");
 const destinationInput = document.getElementById("destination-input");
+const selectedAddressCoords = new Map();
 
 async function geocodeAddress(address) {
-  const response = await fetch(`/api/geocode?address=${encodeURIComponent(address)}`);
+  const normalizedAddress = (address || "").trim();
+  if (!normalizedAddress) return null;
+  if (selectedAddressCoords.has(normalizedAddress)) {
+    return selectedAddressCoords.get(normalizedAddress);
+  }
+
+  const response = await fetch(`/api/geocode?address=${encodeURIComponent(normalizedAddress)}`);
   if (!response.ok) {
     return null;
   }
-  return response.json();
+  const data = await response.json();
+  selectedAddressCoords.set(normalizedAddress, data);
+  return data;
 }
+
+function setupAddressAutocomplete(inputElement, datalistId) {
+  const datalist = document.createElement("datalist");
+  datalist.id = datalistId;
+  document.body.appendChild(datalist);
+  inputElement.setAttribute("list", datalistId);
+
+  let debounceTimer;
+  inputElement.addEventListener("input", () => {
+    clearTimeout(debounceTimer);
+    const value = inputElement.value.trim();
+    if (value.length < 3) {
+      datalist.innerHTML = "";
+      return;
+    }
+
+    debounceTimer = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/geocode/suggest?q=${encodeURIComponent(value)}`);
+        if (!response.ok) {
+          datalist.innerHTML = "";
+          return;
+        }
+
+        const suggestions = await response.json();
+        datalist.innerHTML = "";
+        suggestions.forEach(suggestion => {
+          const option = document.createElement("option");
+          option.value = suggestion.displayName;
+          datalist.appendChild(option);
+          selectedAddressCoords.set(suggestion.displayName, {
+            lat: suggestion.lat,
+            lng: suggestion.lng,
+            displayName: suggestion.displayName
+          });
+        });
+      } catch (error) {
+        console.error("Error cargando sugerencias de dirección:", error);
+      }
+    }, 250);
+  });
+}
+
+setupAddressAutocomplete(originInput, "origin-suggestions");
+setupAddressAutocomplete(destinationInput, "destination-suggestions");
 
 const minLat = 39.00, maxLat = 39.9;
 const minLng = -0.75, maxLng = 0.1;
