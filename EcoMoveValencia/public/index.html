@@ -271,6 +271,7 @@ body.dark-mode .leaflet-popup-tip {
     align-items: center;
     gap: 30px;
     width: 100%;
+    position: relative;
 }
 
 /* Estilo para los labels */
@@ -287,6 +288,32 @@ body.dark-mode .leaflet-popup-tip {
     border: 1px solid #ccc;
     border-radius: 5px;
     outline: none;
+}
+
+.suggestions-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 90px;
+    right: 0;
+    background: white;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 1200;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.suggestions-item {
+    padding: 8px 10px;
+    font-size: 14px;
+    color: #1f2937;
+    cursor: pointer;
+}
+
+.suggestions-item:hover,
+.suggestions-item.active {
+    background: #f3f4f6;
 }
 
 /* Estilo del botón de búsqueda (lupa) */
@@ -609,6 +636,7 @@ body.dark-mode .leaflet-popup-tip {
     align-items: flex-start;
     gap: 1vw;
     width: 100%;
+    position: relative;
   }
 
   .input-container label {
@@ -624,6 +652,18 @@ body.dark-mode .leaflet-popup-tip {
     border-radius: 1.5vw;
     border: 1px solid #ccc;
     outline: none;
+  }
+
+  .suggestions-dropdown {
+    left: 0;
+    right: 0;
+    top: calc(100% + 1vw);
+    max-height: 40vw;
+  }
+
+  .suggestions-item {
+    font-size: 3.7vw;
+    padding: 2.5vw;
   }
 
   .search-icon {
@@ -858,18 +898,6 @@ body.dark-mode .leaflet-popup-tip {
   <!-- Incluir iconos de Lucide -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    // Carga dinámica de Google Maps con la clave obtenida del servidor
-    fetch('/api/google-maps-key')
-      .then(res => res.json())
-      .then(cfg => {
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${cfg.apiKey}&libraries=geometry,places`;
-        script.async = true;
-        script.onload = () => window.dispatchEvent(new Event('google-maps-loaded'));
-        document.head.appendChild(script);
-      });
-  </script>
 <!-- SlickGrid CSS -->
 	   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slickgrid@5.14.0/dist/styles/css/slick-alpine-theme.min.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slickgrid@5.14.0/dist/styles/css/slick.columnpicker.css"> 
