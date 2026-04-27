@@ -858,18 +858,6 @@ body.dark-mode .leaflet-popup-tip {
   <!-- Incluir iconos de Lucide -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    // Carga dinámica de Google Maps con la clave obtenida del servidor
-    fetch('/api/google-maps-key')
-      .then(res => res.json())
-      .then(cfg => {
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${cfg.apiKey}&libraries=geometry,places`;
-        script.async = true;
-        script.onload = () => window.dispatchEvent(new Event('google-maps-loaded'));
-        document.head.appendChild(script);
-      });
-  </script>
 <!-- SlickGrid CSS -->
 	   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slickgrid@5.14.0/dist/styles/css/slick-alpine-theme.min.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slickgrid@5.14.0/dist/styles/css/slick.columnpicker.css"> 
