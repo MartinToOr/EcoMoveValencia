@@ -62,10 +62,150 @@ app.use(express.json()); // Asegura que el body se maneje como JSON
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Endpoint para proporcionar la clave de Google Maps al cliente
-app.get('/api/google-maps-key', (req, res) => {
+async function nominatimSearch(params) {
+    await waitForNominatimSlot();
+    const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+    const response = await fetch(url, {
+        headers: {
+            "User-Agent": "EcoMoveValencia/1.0 (geocoding)",
+            "Accept-Language": "es"
+        }
+    });
+    if (!response.ok) {
+        throw new Error(`Nominatim respondió con estado ${response.status}`);
+    }
+    return response.json();
+}
+
+const NOMINATIM_MIN_INTERVAL_MS = 1100;
+let lastNominatimRequestAt = 0;
+let nominatimQueue = Promise.resolve();
+const geocodeSuggestCache = new Map();
+const GEOCODE_SUGGEST_TTL_MS = 5 * 60 * 1000;
+
+function waitForNominatimSlot() {
+    nominatimQueue = nominatimQueue.then(async () => {
+        const now = Date.now();
+        const waitMs = Math.max(0, NOMINATIM_MIN_INTERVAL_MS - (now - lastNominatimRequestAt));
+        if (waitMs > 0) {
+            await new Promise(resolve => setTimeout(resolve, waitMs));
+        }
+        lastNominatimRequestAt = Date.now();
+    });
+    return nominatimQueue;
+}
+
+function getCachedSuggestions(cacheKey) {
+    const cached = geocodeSuggestCache.get(cacheKey);
+    if (!cached) return null;
+    if (Date.now() > cached.expiresAt) {
+        geocodeSuggestCache.delete(cacheKey);
+        return null;
+    }
+    return cached.data;
+}
+
+function setCachedSuggestions(cacheKey, suggestions) {
+    geocodeSuggestCache.set(cacheKey, {
+        data: suggestions,
+        expiresAt: Date.now() + GEOCODE_SUGGEST_TTL_MS
+    });
+}
+
+function getLastKnownSuggestions(cacheKey) {
+    const cached = geocodeSuggestCache.get(cacheKey);
+    return cached ? cached.data : null;
+}
+
+app.get('/api/geocode', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    res.json({ apiKey });
+    const address = (req.query.address || "").toString().trim();
+    if (!address) {
+        return res.status(400).json({ error: "El parámetro address es obligatorio" });
+    }
+
+    try {
+        const boundedParams = new URLSearchParams({
+            q: address,
+            format: "jsonv2",
+            limit: "1",
+            countrycodes: "es",
+            bounded: "1",
+            viewbox: "-0.75,39.9,0.1,39.0"
+        });
+        let data = await nominatimSearch(boundedParams);
+
+        if (!Array.isArray(data) || data.length === 0) {
+            const fallbackParams = new URLSearchParams({
+                q: `${address}, Valencia`,
+                format: "jsonv2",
+                limit: "1",
+                countrycodes: "es"
+            });
+            data = await nominatimSearch(fallbackParams);
+        }
+
+        const first = Array.isArray(data) ? data[0] : null;
+        if (!first) {
+            return res.status(404).json({ error: "No se encontraron resultados" });
+        }
+
+        const lat = Number(first.lat);
+        const lng = Number(first.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            return res.status(502).json({ error: "Respuesta inválida del geocodificador" });
+        }
+
+        return res.json({
+            lat,
+            lng,
+            displayName: first.display_name || address
+        });
+    } catch (error) {
+        console.error("Error en /api/geocode:", error);
+        return res.status(500).json({ error: "Error interno del servidor" });
+    }
+});
+
+app.get('/api/geocode/suggest', async (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    const query = (req.query.q || "").toString().trim();
+    if (query.length < 3) {
+        return res.json([]);
+    }
+    const cacheKey = query.toLowerCase();
+    const cached = getCachedSuggestions(cacheKey);
+    if (cached) {
+        return res.json(cached);
+    }
+
+    try {
+        const params = new URLSearchParams({
+            q: `${query}, Valencia`,
+            format: "jsonv2",
+            limit: "5",
+            countrycodes: "es",
+            addressdetails: "1"
+        });
+        const data = await nominatimSearch(params);
+        const suggestions = (Array.isArray(data) ? data : [])
+            .map(item => ({
+                displayName: item.display_name,
+                lat: Number(item.lat),
+                lng: Number(item.lon)
+            }))
+            .filter(item => Number.isFinite(item.lat) && Number.isFinite(item.lng) && item.displayName);
+
+        setCachedSuggestions(cacheKey, suggestions);
+        return res.json(suggestions);
+    } catch (error) {
+        console.error("Error en /api/geocode/suggest:", error?.message || error);
+        const staleCache = getLastKnownSuggestions(cacheKey);
+        if (staleCache) {
+            return res.json(staleCache);
+        }
+        return res.json([]);
+    }
 });
 // Ruta de prueba
 app.get('/api/getBicis', (req, res) => {
