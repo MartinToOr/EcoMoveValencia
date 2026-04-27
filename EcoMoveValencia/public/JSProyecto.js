@@ -2552,18 +2552,51 @@ async function geocodeAddress(address) {
   return data;
 }
 
-function setupAddressAutocomplete(inputElement, datalistId) {
-  const datalist = document.createElement("datalist");
-  datalist.id = datalistId;
-  document.body.appendChild(datalist);
-  inputElement.setAttribute("list", datalistId);
+function setupAddressAutocomplete(inputElement) {
+  const parent = inputElement.closest(".input-container");
+  if (!parent) return;
+
+  const dropdown = document.createElement("div");
+  dropdown.className = "suggestions-dropdown";
+  dropdown.style.display = "none";
+  parent.appendChild(dropdown);
 
   let debounceTimer;
+  let currentSuggestions = [];
+
+  function renderSuggestions(suggestions) {
+    currentSuggestions = suggestions;
+    dropdown.innerHTML = "";
+    if (!suggestions.length) {
+      dropdown.style.display = "none";
+      return;
+    }
+
+    suggestions.forEach((suggestion, index) => {
+      const item = document.createElement("div");
+      item.className = "suggestions-item";
+      item.textContent = suggestion.displayName;
+      item.addEventListener("click", () => {
+        inputElement.value = suggestion.displayName;
+        selectedAddressCoords.set(suggestion.displayName, {
+          lat: suggestion.lat,
+          lng: suggestion.lng,
+          displayName: suggestion.displayName
+        });
+        dropdown.style.display = "none";
+      });
+      if (index === 0) item.classList.add("active");
+      dropdown.appendChild(item);
+    });
+
+    dropdown.style.display = "block";
+  }
+
   inputElement.addEventListener("input", () => {
     clearTimeout(debounceTimer);
     const value = inputElement.value.trim();
     if (value.length < 3) {
-      datalist.innerHTML = "";
+      renderSuggestions([]);
       return;
     }
 
@@ -2571,28 +2604,50 @@ function setupAddressAutocomplete(inputElement, datalistId) {
       try {
         const response = await fetch(`/api/geocode/suggest?q=${encodeURIComponent(value)}`);
         if (!response.ok) {
-          datalist.innerHTML = "";
+          renderSuggestions([]);
           return;
         }
 
         const suggestions = await response.json();
-        datalist.innerHTML = "";
         suggestions.forEach(suggestion => {
-          const option = document.createElement("option");
-          option.value = suggestion.displayName;
-          datalist.appendChild(option);
           selectedAddressCoords.set(suggestion.displayName, {
             lat: suggestion.lat,
             lng: suggestion.lng,
             displayName: suggestion.displayName
           });
         });
+        renderSuggestions(suggestions);
       } catch (error) {
         console.error("Error cargando sugerencias de dirección:", error);
+        renderSuggestions([]);
       }
     }, 250);
   });
+
+  inputElement.addEventListener("focus", () => {
+    if (currentSuggestions.length > 0) {
+      dropdown.style.display = "block";
+    }
+  });
+
+  inputElement.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || dropdown.style.display === "none") return;
+    const first = dropdown.querySelector(".suggestions-item");
+    if (first) {
+      event.preventDefault();
+      first.click();
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!parent.contains(event.target)) {
+      dropdown.style.display = "none";
+    }
+  });
 }
+
+setupAddressAutocomplete(originInput);
+setupAddressAutocomplete(destinationInput);
 
 setupAddressAutocomplete(originInput, "origin-suggestions");
 setupAddressAutocomplete(destinationInput, "destination-suggestions");
