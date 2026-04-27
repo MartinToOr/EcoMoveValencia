@@ -2649,6 +2649,9 @@ function setupAddressAutocomplete(inputElement) {
 setupAddressAutocomplete(originInput);
 setupAddressAutocomplete(destinationInput);
 
+setupAddressAutocomplete(originInput);
+setupAddressAutocomplete(destinationInput);
+
 setupAddressAutocomplete(originInput, "origin-suggestions");
 setupAddressAutocomplete(destinationInput, "destination-suggestions");
 

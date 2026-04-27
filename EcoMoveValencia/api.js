@@ -63,6 +63,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 async function nominatimSearch(params) {
+    await waitForNominatimSlot();
     const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
     const response = await fetch(url, {
         headers: {
@@ -74,6 +75,46 @@ async function nominatimSearch(params) {
         throw new Error(`Nominatim respondió con estado ${response.status}`);
     }
     return response.json();
+}
+
+const NOMINATIM_MIN_INTERVAL_MS = 1100;
+let lastNominatimRequestAt = 0;
+let nominatimQueue = Promise.resolve();
+const geocodeSuggestCache = new Map();
+const GEOCODE_SUGGEST_TTL_MS = 5 * 60 * 1000;
+
+function waitForNominatimSlot() {
+    nominatimQueue = nominatimQueue.then(async () => {
+        const now = Date.now();
+        const waitMs = Math.max(0, NOMINATIM_MIN_INTERVAL_MS - (now - lastNominatimRequestAt));
+        if (waitMs > 0) {
+            await new Promise(resolve => setTimeout(resolve, waitMs));
+        }
+        lastNominatimRequestAt = Date.now();
+    });
+    return nominatimQueue;
+}
+
+function getCachedSuggestions(cacheKey) {
+    const cached = geocodeSuggestCache.get(cacheKey);
+    if (!cached) return null;
+    if (Date.now() > cached.expiresAt) {
+        geocodeSuggestCache.delete(cacheKey);
+        return null;
+    }
+    return cached.data;
+}
+
+function setCachedSuggestions(cacheKey, suggestions) {
+    geocodeSuggestCache.set(cacheKey, {
+        data: suggestions,
+        expiresAt: Date.now() + GEOCODE_SUGGEST_TTL_MS
+    });
+}
+
+function getLastKnownSuggestions(cacheKey) {
+    const cached = geocodeSuggestCache.get(cacheKey);
+    return cached ? cached.data : null;
 }
 
 app.get('/api/geocode', async (req, res) => {
@@ -132,6 +173,11 @@ app.get('/api/geocode/suggest', async (req, res) => {
     if (query.length < 3) {
         return res.json([]);
     }
+    const cacheKey = query.toLowerCase();
+    const cached = getCachedSuggestions(cacheKey);
+    if (cached) {
+        return res.json(cached);
+    }
 
     try {
         const params = new URLSearchParams({
@@ -150,10 +196,15 @@ app.get('/api/geocode/suggest', async (req, res) => {
             }))
             .filter(item => Number.isFinite(item.lat) && Number.isFinite(item.lng) && item.displayName);
 
+        setCachedSuggestions(cacheKey, suggestions);
         return res.json(suggestions);
     } catch (error) {
-        console.error("Error en /api/geocode/suggest:", error);
-        return res.status(500).json({ error: "Error interno del servidor" });
+        console.error("Error en /api/geocode/suggest:", error?.message || error);
+        const staleCache = getLastKnownSuggestions(cacheKey);
+        if (staleCache) {
+            return res.json(staleCache);
+        }
+        return res.json([]);
     }
 });
 // Ruta de prueba
