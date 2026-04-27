@@ -637,7 +637,6 @@ body.dark-mode .bar-track {
 
     const savedThemeInfo = localStorage.getItem("themeMode") === "dark";
     if (savedThemeInfo) document.body.classList.add("dark-mode");
-    initInfoThemeGif();
     refreshInfoThemeButton();
 
     themeToggleBtnInfo.addEventListener("click", () => {
