@@ -7,9 +7,6 @@ let inicio;
         function calculateDistanceAndRoute() {
           if (!pointA || !pointB) return;
 
-          const origin = new google.maps.LatLng(pointA.lat, pointA.lng);
-          const destination = new google.maps.LatLng(pointB.lat, pointB.lng);
-
 		  if (transportMode === "COMPARA") {
 			inicio = performance.now();
 		      let modes = ["WALKING", "DRIVING", "BICYCLING", "PATINETE", "Valenbisi", "METRO", "BUS", "TRAIN", "ELECTRIC_MOTORBIKE", "TAXI"];
@@ -2538,22 +2535,12 @@ function muestraRutaDesdeTabla(respuesta){
 const originInput = document.getElementById("origin-input");
 const destinationInput = document.getElementById("destination-input");
 
-let originAutocomplete;
-let destinationAutocomplete;
-let directionsService;
-let distanceService;
-
-function initGoogleApis() {
-    directionsService = new google.maps.DirectionsService();
-    distanceService = new google.maps.DistanceMatrixService();
-    originAutocomplete = new google.maps.places.Autocomplete(originInput);
-    destinationAutocomplete = new google.maps.places.Autocomplete(destinationInput);
-}
-
-if (window.google && window.google.maps && window.google.maps.places) {
-    initGoogleApis();
-} else {
-    window.addEventListener('google-maps-loaded', initGoogleApis);
+async function geocodeAddress(address) {
+  const response = await fetch(`/api/geocode?address=${encodeURIComponent(address)}`);
+  if (!response.ok) {
+    return null;
+  }
+  return response.json();
 }
 
 const minLat = 39.00, maxLat = 39.9;
@@ -2567,7 +2554,7 @@ function isWithinBounds(latlng) {
 }
 
 // Cuando se hace click en el botón "Establecer dirección"
-document.getElementById("set-directions").addEventListener("click", function() {
+document.getElementById("set-directions").addEventListener("click", async function() {
 	
 	
 	console.log(window.innerWidth);
@@ -2597,58 +2584,43 @@ document.getElementById("set-directions").addEventListener("click", function() {
     return;
   }
 
-  const geocoder = new google.maps.Geocoder();
+  const originData = await geocodeAddress(originAddress);
+  if (!originData) {
+    mostrarPopupInfo(tm("selecciona_origen"), "error");
+    return;
+  }
 
-  // Geocode para la dirección de origen
-  geocoder.geocode({ address: originAddress }, function(results, status) {//
-    if (status === google.maps.GeocoderStatus.OK && results[0]) {
-      const originLocation = results[0].geometry.location;
-      // Convierte la posición de Google a un objeto LatLng de Leaflet
-      pointA = L.latLng(originLocation.lat(), originLocation.lng());
+  pointA = L.latLng(originData.lat, originData.lng);
+  if (markerA) {
+    map.removeLayer(markerA);
+  }
 
-      // Si ya existe un marker, se elimina
-      if (markerA) {
-        map.removeLayer(markerA);
-      }
-      
-      if (!isWithinBounds(pointA)) {
-          mostrarPopupInfo(tm("fuera_limites_origen"), "error");
-          return;
-      }
-      
-      markerA = createMarker(pointA, "red");
+  if (!isWithinBounds(pointA)) {
+    mostrarPopupInfo(tm("fuera_limites_origen"), "error");
+    return;
+  }
+  markerA = createMarker(pointA, "red");
 
-      // Geocode para la dirección de destino
-      geocoder.geocode({ address: destinationAddress }, function(results2, status2) {
-        if (status2 === google.maps.GeocoderStatus.OK && results2[0]) {
-          const destinationLocation = results2[0].geometry.location;
-          pointB = L.latLng(destinationLocation.lat(), destinationLocation.lng());
+  const destinationData = await geocodeAddress(destinationAddress);
+  if (!destinationData) {
+    mostrarPopupInfo(tm("selecciona_destino"), "error");
+    return;
+  }
 
-          
-          if (!isWithinBounds(pointB)) {
-               mostrarPopupInfo(tm("fuera_limites_destino"), "error");
-              return;
-          }
-	        
-          if (markerB) {
-            map.removeLayer(markerB);
-          }
-          markerB = createMarker(pointB, "blue");
+  pointB = L.latLng(destinationData.lat, destinationData.lng);
+  if (!isWithinBounds(pointB)) {
+    mostrarPopupInfo(tm("fuera_limites_destino"), "error");
+    return;
+  }
 
-          document.getElementById("distance-info").innerText = "Origen y destino establecidos.";
-          // Centrar el mapa entre ambos puntos
-          moveToMidPointMarkers(pointA, pointB);
+  if (markerB) {
+    map.removeLayer(markerB);
+  }
+  markerB = createMarker(pointB, "blue");
 
-          // Opcional: Llama a la función para calcular/dibujar la ruta según la opción de transporte
-          seleccionaOpcionTransporte();
-        } else {
-           mostrarPopupInfo(tm("selecciona_destino"), "error");
-        }
-      });
-    } else {
-      mostrarPopupInfo(tm("selecciona_origen"), "error");
-    }
-  });
+  document.getElementById("distance-info").innerText = "Origen y destino establecidos.";
+  moveToMidPointMarkers(pointA, pointB);
+  seleccionaOpcionTransporte();
 });
 
 
