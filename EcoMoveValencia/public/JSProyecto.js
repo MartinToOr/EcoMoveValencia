@@ -2649,6 +2649,9 @@ function setupAddressAutocomplete(inputElement) {
 setupAddressAutocomplete(originInput);
 setupAddressAutocomplete(destinationInput);
 
+setupAddressAutocomplete(originInput, "origin-suggestions");
+setupAddressAutocomplete(destinationInput, "destination-suggestions");
+
 const minLat = 39.00, maxLat = 39.9;
 const minLng = -0.75, maxLng = 0.1;
 
