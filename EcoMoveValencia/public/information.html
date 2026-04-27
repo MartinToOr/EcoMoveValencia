@@ -83,6 +83,12 @@
       display: block;
       margin: 0 auto;
     }
+    .theme-toggle-icon {
+      width: 18px;
+      height: 18px;
+      display: block;
+      margin: 0 auto;
+    }
     .bandera {
       width: 40px;
       cursor: pointer;
@@ -257,7 +263,7 @@ body.dark-mode .bar-track {
     <img src="img/en.png" class="bandera en" onclick="cambiarIdioma('en')">
   </div>
   <button id="themeToggleBtnInfo" class="theme-toggle-btn" aria-label="Cambiar tema">
-    <img id="themeToggleGifInfo" class="theme-toggle-icon" src="img/icons8-sol-200.gif" alt="">
+    <img id="themeToggleIconInfo" class="theme-toggle-icon" src="img/sol.svg" alt="">
   </button>
   <!-- Logo -->
   <img src="img/logo1.png" alt="Logo" class="logo">
@@ -293,7 +299,6 @@ body.dark-mode .bar-track {
     <p id="legal-texto"></p>
     <a href="index.html" class="back-btn" id="volver-boton"></a>
   </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/libgif/0.2.0/libgif.min.js"></script>
   <script>
     // Set initial language from localStorage or default to Spanish
     let idiomaActual = localStorage.getItem('idioma') || 'es';
@@ -622,63 +627,12 @@ body.dark-mode .bar-track {
     }
     const emisionesValores = [102.14, 79.28, 65, 71.42, 43, 78.61, 53, 14, 49.9, 33, 30, 3, 0, 0];
     const themeToggleBtnInfo = document.getElementById("themeToggleBtnInfo");
-    const themeToggleGifInfo = document.getElementById("themeToggleGifInfo");
-    let themeGifControllerInfo = null;
-    let themeGifReadyInfo = false;
-    let themeGifFrameCountInfo = 0;
-    let themeGifMidFrameInfo = 0;
-
-    function initInfoThemeGif() {
-      if (!themeToggleGifInfo || typeof SuperGif === "undefined") return;
-
-      themeGifControllerInfo = new SuperGif({
-        gif: themeToggleGifInfo,
-        auto_play: false,
-        max_width: 18
-      });
-
-      themeGifControllerInfo.load(() => {
-        themeGifReadyInfo = true;
-        themeGifFrameCountInfo = Math.max(1, themeGifControllerInfo.get_length());
-        themeGifMidFrameInfo = Math.floor((themeGifFrameCountInfo - 1) / 2);
-        moveInfoThemeGifToState(document.body.classList.contains("dark-mode"));
-      });
-    }
-
-    function moveInfoThemeGifToState(isDarkMode) {
-      if (!themeGifReadyInfo) return;
-      themeGifControllerInfo.pause();
-      themeGifControllerInfo.move_to(isDarkMode ? themeGifMidFrameInfo : 0);
-    }
-
-    function animateInfoThemeGif(fromFrame, toFrame, onDone) {
-      if (!themeGifReadyInfo) {
-        if (onDone) onDone();
-        return;
-      }
-
-      const step = fromFrame <= toFrame ? 1 : -1;
-      let currentFrame = fromFrame;
-      themeGifControllerInfo.pause();
-      themeGifControllerInfo.move_to(currentFrame);
-
-      function tick() {
-        if (currentFrame === toFrame) {
-          if (onDone) onDone();
-          return;
-        }
-        currentFrame += step;
-        themeGifControllerInfo.move_to(currentFrame);
-        setTimeout(() => requestAnimationFrame(tick), 30);
-      }
-
-      requestAnimationFrame(tick);
-    }
+    const themeToggleIconInfo = document.getElementById("themeToggleIconInfo");
 
     function refreshInfoThemeButton() {
       const darkEnabled = document.body.classList.contains("dark-mode");
       themeToggleBtnInfo.classList.toggle("is-dark", darkEnabled);
-      moveInfoThemeGifToState(darkEnabled);
+      themeToggleIconInfo.src = darkEnabled ? "img/luna.svg" : "img/sol.svg";
     }
 
     const savedThemeInfo = localStorage.getItem("themeMode") === "dark";
