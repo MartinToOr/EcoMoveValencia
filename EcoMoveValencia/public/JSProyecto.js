@@ -2534,126 +2534,23 @@ function muestraRutaDesdeTabla(respuesta){
 
 const originInput = document.getElementById("origin-input");
 const destinationInput = document.getElementById("destination-input");
-const selectedAddressCoords = new Map();
+let originAutocomplete;
+let destinationAutocomplete;
+let directionsService;
+let distanceService;
 
-async function geocodeAddress(address) {
-  const normalizedAddress = (address || "").trim();
-  if (!normalizedAddress) return null;
-  if (selectedAddressCoords.has(normalizedAddress)) {
-    return selectedAddressCoords.get(normalizedAddress);
-  }
-
-  const response = await fetch(`/api/geocode?address=${encodeURIComponent(normalizedAddress)}`);
-  if (!response.ok) {
-    return null;
-  }
-  const data = await response.json();
-  selectedAddressCoords.set(normalizedAddress, data);
-  return data;
+function initGoogleApis() {
+    directionsService = new google.maps.DirectionsService();
+    distanceService = new google.maps.DistanceMatrixService();
+    originAutocomplete = new google.maps.places.Autocomplete(originInput);
+    destinationAutocomplete = new google.maps.places.Autocomplete(destinationInput);
 }
 
-function setupAddressAutocomplete(inputElement) {
-  const parent = inputElement.closest(".input-container");
-  if (!parent) return;
-
-  const dropdown = document.createElement("div");
-  dropdown.className = "suggestions-dropdown";
-  dropdown.style.display = "none";
-  parent.appendChild(dropdown);
-
-  let debounceTimer;
-  let currentSuggestions = [];
-
-  function renderSuggestions(suggestions) {
-    currentSuggestions = suggestions;
-    dropdown.innerHTML = "";
-    if (!suggestions.length) {
-      dropdown.style.display = "none";
-      return;
-    }
-
-    suggestions.forEach((suggestion, index) => {
-      const item = document.createElement("div");
-      item.className = "suggestions-item";
-      item.textContent = suggestion.displayName;
-      item.addEventListener("click", () => {
-        inputElement.value = suggestion.displayName;
-        selectedAddressCoords.set(suggestion.displayName, {
-          lat: suggestion.lat,
-          lng: suggestion.lng,
-          displayName: suggestion.displayName
-        });
-        dropdown.style.display = "none";
-      });
-      if (index === 0) item.classList.add("active");
-      dropdown.appendChild(item);
-    });
-
-    dropdown.style.display = "block";
-  }
-
-  inputElement.addEventListener("input", () => {
-    clearTimeout(debounceTimer);
-    const value = inputElement.value.trim();
-    if (value.length < 3) {
-      renderSuggestions([]);
-      return;
-    }
-
-    debounceTimer = setTimeout(async () => {
-      try {
-        const response = await fetch(`/api/geocode/suggest?q=${encodeURIComponent(value)}`);
-        if (!response.ok) {
-          renderSuggestions([]);
-          return;
-        }
-
-        const suggestions = await response.json();
-        suggestions.forEach(suggestion => {
-          selectedAddressCoords.set(suggestion.displayName, {
-            lat: suggestion.lat,
-            lng: suggestion.lng,
-            displayName: suggestion.displayName
-          });
-        });
-        renderSuggestions(suggestions);
-      } catch (error) {
-        console.error("Error cargando sugerencias de dirección:", error);
-        renderSuggestions([]);
-      }
-    }, 250);
-  });
-
-  inputElement.addEventListener("focus", () => {
-    if (currentSuggestions.length > 0) {
-      dropdown.style.display = "block";
-    }
-  });
-
-  inputElement.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter" || dropdown.style.display === "none") return;
-    const first = dropdown.querySelector(".suggestions-item");
-    if (first) {
-      event.preventDefault();
-      first.click();
-    }
-  });
-
-  document.addEventListener("click", (event) => {
-    if (!parent.contains(event.target)) {
-      dropdown.style.display = "none";
-    }
-  });
+if (window.google && window.google.maps && window.google.maps.places) {
+    initGoogleApis();
+} else {
+    window.addEventListener('google-maps-loaded', initGoogleApis);
 }
-
-setupAddressAutocomplete(originInput);
-setupAddressAutocomplete(destinationInput);
-
-setupAddressAutocomplete(originInput);
-setupAddressAutocomplete(destinationInput);
-
-setupAddressAutocomplete(originInput, "origin-suggestions");
-setupAddressAutocomplete(destinationInput, "destination-suggestions");
 
 const minLat = 39.00, maxLat = 39.9;
 const minLng = -0.75, maxLng = 0.1;
@@ -2666,7 +2563,7 @@ function isWithinBounds(latlng) {
 }
 
 // Cuando se hace click en el botón "Establecer dirección"
-document.getElementById("set-directions").addEventListener("click", async function() {
+document.getElementById("set-directions").addEventListener("click", function() {
 	
 	
 	console.log(window.innerWidth);
@@ -2696,43 +2593,51 @@ document.getElementById("set-directions").addEventListener("click", async functi
     return;
   }
 
-  const originData = await geocodeAddress(originAddress);
-  if (!originData) {
-    mostrarPopupInfo(tm("selecciona_origen"), "error");
-    return;
-  }
+  const geocoder = new google.maps.Geocoder();
 
-  pointA = L.latLng(originData.lat, originData.lng);
-  if (markerA) {
-    map.removeLayer(markerA);
-  }
+  geocoder.geocode({ address: originAddress }, function(results, status) {
+    if (status === google.maps.GeocoderStatus.OK && results[0]) {
+      const originLocation = results[0].geometry.location;
+      pointA = L.latLng(originLocation.lat(), originLocation.lng());
 
-  if (!isWithinBounds(pointA)) {
-    mostrarPopupInfo(tm("fuera_limites_origen"), "error");
-    return;
-  }
-  markerA = createMarker(pointA, "red");
+      if (markerA) {
+        map.removeLayer(markerA);
+      }
+      
+      if (!isWithinBounds(pointA)) {
+          mostrarPopupInfo(tm("fuera_limites_origen"), "error");
+          return;
+      }
+      
+      markerA = createMarker(pointA, "red");
 
-  const destinationData = await geocodeAddress(destinationAddress);
-  if (!destinationData) {
-    mostrarPopupInfo(tm("selecciona_destino"), "error");
-    return;
-  }
+      geocoder.geocode({ address: destinationAddress }, function(results2, status2) {
+        if (status2 === google.maps.GeocoderStatus.OK && results2[0]) {
+          const destinationLocation = results2[0].geometry.location;
+          pointB = L.latLng(destinationLocation.lat(), destinationLocation.lng());
 
-  pointB = L.latLng(destinationData.lat, destinationData.lng);
-  if (!isWithinBounds(pointB)) {
-    mostrarPopupInfo(tm("fuera_limites_destino"), "error");
-    return;
-  }
+          
+          if (!isWithinBounds(pointB)) {
+               mostrarPopupInfo(tm("fuera_limites_destino"), "error");
+              return;
+          }
+	        
+          if (markerB) {
+            map.removeLayer(markerB);
+          }
+          markerB = createMarker(pointB, "blue");
 
-  if (markerB) {
-    map.removeLayer(markerB);
-  }
-  markerB = createMarker(pointB, "blue");
-
-  document.getElementById("distance-info").innerText = "Origen y destino establecidos.";
-  moveToMidPointMarkers(pointA, pointB);
-  seleccionaOpcionTransporte();
+          document.getElementById("distance-info").innerText = "Origen y destino establecidos.";
+          moveToMidPointMarkers(pointA, pointB);
+          seleccionaOpcionTransporte();
+        } else {
+           mostrarPopupInfo(tm("selecciona_destino"), "error");
+        }
+      });
+    } else {
+      mostrarPopupInfo(tm("selecciona_origen"), "error");
+    }
+  });
 });
 
 
