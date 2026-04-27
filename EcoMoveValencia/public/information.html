@@ -65,13 +65,19 @@
       height: 38px;
       border-radius: 50%;
       border: 1px solid #d1d5db;
-      background: #fff url("img/icons8-sol-200.gif") center/18px 18px no-repeat;
+      background: #fff;
       font-size: 0;
       cursor: pointer;
     }
     .theme-toggle-btn.is-dark {
       background-color: #111827;
       border-color: #4b5563;
+    }
+    .theme-toggle-icon {
+      width: 18px;
+      height: 18px;
+      display: block;
+      margin: 0 auto;
     }
     .bandera {
       width: 40px;
@@ -246,7 +252,9 @@ body.dark-mode .bar-track {
     <img src="img/val.jpg" class="bandera val" onclick="cambiarIdioma('val')">
     <img src="img/en.png" class="bandera en" onclick="cambiarIdioma('en')">
   </div>
-  <button id="themeToggleBtnInfo" class="theme-toggle-btn" aria-label="Cambiar tema"></button>
+  <button id="themeToggleBtnInfo" class="theme-toggle-btn" aria-label="Cambiar tema">
+    <img id="themeToggleIconInfo" class="theme-toggle-icon" src="img/sol.svg" alt="">
+  </button>
   <!-- Logo -->
   <img src="img/logo1.png" alt="Logo" class="logo">
   <div class="container">
@@ -609,10 +617,12 @@ body.dark-mode .bar-track {
     }
     const emisionesValores = [102.14, 79.28, 65, 71.42, 43, 78.61, 53, 14, 49.9, 33, 30, 3, 0, 0];
     const themeToggleBtnInfo = document.getElementById("themeToggleBtnInfo");
+    const themeToggleIconInfo = document.getElementById("themeToggleIconInfo");
 
     function refreshInfoThemeButton() {
       const darkEnabled = document.body.classList.contains("dark-mode");
       themeToggleBtnInfo.classList.toggle("is-dark", darkEnabled);
+      themeToggleIconInfo.src = darkEnabled ? "img/luna.svg" : "img/sol.svg";
     }
 
     const savedThemeInfo = localStorage.getItem("themeMode") === "dark";
