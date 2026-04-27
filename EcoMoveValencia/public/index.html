@@ -1481,7 +1481,7 @@ refreshThemeButton();
         	  { clave: "ELECTRIC_MOTORBIKE", valor: "ELECTRIC_MOTORBIKE", img: "img/electrica.png" },
         	  { clave: "METRO", valor: "METRO", img: "img/subterraneo.png" },
         	  { clave: "BUS", valor: "BUS", img: "img/bus.png" },
-        	  { clave: "Valenbisi", valor: "Valenbisi", img: "img/valenbisi.jpg" },
+        	  { clave: "Valenbisi", valor: "Valenbisi", img: darkMode ? "img/valenbisi_modo_oscuro.png" : "img/valenbisi.jpg" },
         	  { clave: "TRAIN", valor: "TRAIN", img: "img/rodalies.png" },
         	  { clave: "TAXI", valor: "TAXI", img: "img/taxi.png" }
         	];
@@ -1508,10 +1508,8 @@ refreshThemeButton();
             img.style.height = "60px";
             img.style.borderRadius = "10px";
             img.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.2)";
-            if (boton.clave === "Valenbisi" && darkMode) {
-            	img.style.background = "#0f172a";
-            	img.style.padding = "4px";
-            	img.style.border = "1px solid #374151";
+            if (darkMode) {
+                img.style.filter = "brightness(0) invert(1)";
             }
             
             let texto = document.createElement("span");
@@ -1557,6 +1555,9 @@ refreshThemeButton();
         imgComparar.style.height = "60px";
         imgComparar.style.borderRadius = "10px";
         imgComparar.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.2)";
+        if (darkMode) {
+            imgComparar.style.filter = "brightness(0) invert(1)";
+        }
         
         let textoComparar = document.createElement("span");
         textoComparar.innerText = t("comparar");
