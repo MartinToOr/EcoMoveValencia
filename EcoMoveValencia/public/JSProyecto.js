@@ -2262,8 +2262,25 @@ function muestraRutaDesdeTabla(respuesta){
 		}
 
 
-		var metroCoordinates = {};
-		var stationUsage = {};
+			var metroCoordinates = {};
+			var stationUsage = {};
+			const normalizeMetroStationName = (name) => {
+			    const normalized = String(name || "")
+			        .normalize("NFD")
+			        .replace(/[\u0300-\u036f]/g, "")
+			        .toLowerCase()
+			        .replace(/[^a-z0-9]/g, "");
+
+			    const aliases = {
+			        angelguimera: "angelguimera",
+			        colon: "colon",
+			        facultats: "facultatsmanuelbroseta",
+			        alborayapalmaret: "alboraiapalmaret",
+			        alborayaperisarago: "alboraiaperisarago"
+			    };
+
+			    return aliases[normalized] || normalized;
+			};
 
 		function processMetroStations(stations) {
 		    // Reiniciar estructuras de datos
@@ -2317,9 +2334,11 @@ function muestraRutaDesdeTabla(respuesta){
 			Object.keys(metroCoordinates).forEach(linea => {
 			    if (metroStations[linea]) {
 			        // Crear un nuevo array donde las estaciones se ordenarán según metroStations
-			        let orderedStations = metroStations[linea]
-			            .map(stationName => metroCoordinates[linea].find(st => st.name === stationName))
-			            .filter(st => st); // Filtrar estaciones que existen en metroCoordinates
+				        let orderedStations = metroStations[linea]
+				            .map(stationName => metroCoordinates[linea].find(st =>
+				                normalizeMetroStationName(st.name) === normalizeMetroStationName(stationName)
+				            ))
+				            .filter(st => st); // Filtrar estaciones que existen en metroCoordinates
 
 			        metroLines[linea] = orderedStations;
 			    }
