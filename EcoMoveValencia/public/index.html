@@ -790,7 +790,7 @@ body.dark-mode .leaflet-popup-tip {
 
   <header>
 <a href="information.html" style="z-index: 999; position: fixed; bottom: 2vh; left: 2vw;">
-  <img src="img/logo1.png" alt="Logo" class="logo" style="pointer-events: auto;">
+  <img id="mainLogo" src="img/logo1.png" alt="Logo" class="logo" style="pointer-events: auto;">
 </a>
 
 
@@ -1350,11 +1350,13 @@ applyMapTheme(savedTheme);
 
 const themeToggleBtn = document.getElementById("themeToggleBtn");
 const themeToggleIcon = document.getElementById("themeToggleIcon");
+const mainLogo = document.getElementById("mainLogo");
 
 function refreshThemeButton() {
     const darkEnabled = window.isDarkModeEnabled();
     themeToggleBtn.classList.toggle("is-dark", darkEnabled);
     themeToggleIcon.src = darkEnabled ? "img/luna.svg" : "img/sol.svg";
+    mainLogo.src = darkEnabled ? "img/logo2.png" : "img/logo1.png";
 }
 
 themeToggleBtn.addEventListener("click", () => {

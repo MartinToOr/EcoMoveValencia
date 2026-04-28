@@ -267,7 +267,7 @@ body.dark-mode .bar-track {
     <img id="themeToggleIconInfo" class="theme-toggle-icon" src="img/sol.svg" alt="">
   </button>
   <!-- Logo -->
-  <a href="index.html"><img src="img/logo1.png" alt="Logo" class="logo"></a>
+  <a href="index.html"><img id="infoLogo" src="img/logo1.png" alt="Logo" class="logo"></a>
   <div class="container">
     <h1 id="titulo"></h1>
     <h2 id="contexto-titulo"></h2>
@@ -635,11 +635,13 @@ body.dark-mode .bar-track {
     const emisionesValores = [102.14, 79.28, 65, 71.42, 43, 78.61, 53, 14, 49.9, 33, 30, 3, 0, 0];
     const themeToggleBtnInfo = document.getElementById("themeToggleBtnInfo");
     const themeToggleIconInfo = document.getElementById("themeToggleIconInfo");
+    const infoLogo = document.getElementById("infoLogo");
 
     function refreshInfoThemeButton() {
       const darkEnabled = document.body.classList.contains("dark-mode");
       themeToggleBtnInfo.classList.toggle("is-dark", darkEnabled);
       themeToggleIconInfo.src = darkEnabled ? "img/luna.svg" : "img/sol.svg";
+      infoLogo.src = darkEnabled ? "img/logo2.png" : "img/logo1.png";
     }
 
     const savedThemeInfo = localStorage.getItem("themeMode") === "dark";
