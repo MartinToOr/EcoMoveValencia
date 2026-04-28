@@ -19,6 +19,20 @@ const app = express();
 const port = process.env.PORT || 3000;
 const openAiApiKey = process.env.OPENAI_API_KEY || "";
 const openAiModel = process.env.OPENAI_MODEL || "gpt-4.1-mini";
+const TRANSPORT_EXPLANATION_SYSTEM_PROMPT = `Eres un asistente experto en movilidad sostenible de Valencia. Tu objetivo es explicar una recomendación ya decidida, sin cambiarla.
+Reglas:
+1) Devuelve SOLO JSON válido con: {"reason":"explicación"}.
+2) Debes defender el modo recomendado usando tiempo, distancia y CO2 exactos que recibes.
+3) Haz una reflexión comparativa fiel a los datos exactos (tiempo, distancia y CO2) e indica empates reales cuando existan.
+4) Evita plantillas rígidas o frases fijas; redacta una explicación natural y útil en máximo 4 frases.
+5) No inventes datos ni afirmes que una opción es "la mejor" en un criterio si hay empate.
+6) Responde estrictamente en el idioma indicado en el campo "idiomaRespuesta".
+7) Usa modeLabel para nombrar los modos cuando exista.
+8) Nunca escribas el typo "BYCICLING".
+9) Para rutas largas (más de 6-7 km), evita sobrepriorizar micromovilidad (bici, Valenbisi, patinete) salvo que los datos lo justifiquen claramente.
+10) Cierra la explicación con una frase breve indicando si conviene transporte público y cuál sería la mejor alternativa de transporte público según los datos (si existe).
+11) Expresa SIEMPRE tiempos en minutos (min) y distancias en kilómetros (km).
+12) Usa coma como separador decimal en CO2 (g) y cualquier métrica decimal (ej. 102,63 g; 5,43 km).`;
 
 
 
@@ -604,34 +618,7 @@ app.post('/api/recommend-transport', async (req, res) => {
                 modeLabel: labelByMode[candidate.mode] || candidate.mode
             });
 
-            const systemPrompt = `Eres un asistente experto en movilidad sostenible de Valencia. Tu objetivo es explicar una recomendación ya decidida, sin cambiarla.
-Reglas:
-1) Devuelve SOLO JSON válido con: {"reason":"explicación"}.
-2) Debes defender el modo recomendado usando tiempo, distancia y CO2 exactos que recibes.
-3) Haz una reflexión comparativa fiel a los datos exactos (tiempo, distancia y CO2) e indica empates reales cuando existan.
-4) Evita plantillas rígidas o frases fijas; redacta una explicación natural y útil en máximo 4 frases.
-5) No inventes datos ni afirmes que una opción es "la mejor" en un criterio si hay empate.
-6) Responde estrictamente en este idioma: ${responseLanguage === 'en' ? 'English' : responseLanguage === 'val' ? 'valencià' : 'español'}.
-7) Usa modeLabel para nombrar los modos cuando exista.
-8) Nunca escribas el typo "BYCICLING".
-9) Para rutas largas (más de 6-7 km), evita sobrepriorizar micromovilidad (bici, Valenbisi, patinete) salvo que los datos lo justifiquen claramente.
-10) Cierra la explicación con una frase breve indicando si conviene transporte público y cuál sería la mejor alternativa de transporte público según los datos (si existe).
-11) Expresa SIEMPRE tiempos en minutos (min) y distancias en kilómetros (km).
-12) Usa coma como separador decimal en CO2 (g) y cualquier métrica decimal (ej. 102,63 g; 5,43 km).`;
-
             const tieTolerance = 1e-9;
-            const rankingTiempo = [...candidates]
-                .sort((a, b) => a.totalTime - b.totalTime)
-                .slice(0, 5)
-                .map(candidate => ({ mode: candidate.mode, totalTime: candidate.totalTime, totalDistance: candidate.totalDistance, co2: candidate.co2 }));
-            const rankingEmisiones = [...candidates]
-                .sort((a, b) => a.co2 - b.co2)
-                .slice(0, 5)
-                .map(candidate => ({ mode: candidate.mode, totalTime: candidate.totalTime, totalDistance: candidate.totalDistance, co2: candidate.co2 }));
-            const rankingDistancia = [...candidates]
-                .sort((a, b) => a.totalDistance - b.totalDistance)
-                .slice(0, 5)
-                .map(candidate => ({ mode: candidate.mode, totalTime: candidate.totalTime, totalDistance: candidate.totalDistance, co2: candidate.co2 }));
 
             const empateTiempo = candidates
                 .filter(candidate => Math.abs(candidate.totalTime - bestByTime.totalTime) <= tieTolerance)
@@ -650,9 +637,6 @@ Reglas:
                 mejorTiempo: enrichCandidateForPrompt(toLabeledCandidate(bestByTime)),
                 mejorEmisiones: enrichCandidateForPrompt(toLabeledCandidate(bestByCo2)),
                 mejorDistancia: enrichCandidateForPrompt(toLabeledCandidate(bestByDistance)),
-                rankingTiempo: rankingTiempo.map(toLabeledCandidate).map(enrichCandidateForPrompt),
-                rankingEmisiones: rankingEmisiones.map(toLabeledCandidate).map(enrichCandidateForPrompt),
-                rankingDistancia: rankingDistancia.map(toLabeledCandidate).map(enrichCandidateForPrompt),
                 mejorTransportePublico: bestPublicTransport ? enrichCandidateForPrompt(toLabeledCandidate(bestPublicTransport)) : null,
                 empates: {
                     tiempo: empateTiempo.map(mode => ({ mode, modeLabel: labelByMode[mode] || mode })),
@@ -673,7 +657,7 @@ Reglas:
                     temperature: 0.7,
                     response_format: { type: 'json_object' },
                     messages: [
-                        { role: 'system', content: systemPrompt },
+                        { role: 'system', content: TRANSPORT_EXPLANATION_SYSTEM_PROMPT },
                         { role: 'user', content: JSON.stringify(explanationPrompt) }
                     ]
                 })
