@@ -7,6 +7,25 @@ let inicio;
         function calculateDistanceAndRoute() {
           if (!pointA || !pointB) return;
 
+          const actionType = transportMode === "COMPARA"
+            ? "COMPARE_ALL"
+            : transportMode === "AI_PICK"
+              ? "AI_PICK"
+              : "ROUTE";
+
+          fetch("/api/log-route-request", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              actionType,
+              mode: transportMode,
+              origin: pointA,
+              destination: pointB
+            })
+          }).catch(error => {
+            console.warn("No se pudo registrar la solicitud de ruta:", error);
+          });
+
 		  if (transportMode === "COMPARA") {
 			inicio = performance.now();
 		      let modes = ["WALKING", "DRIVING", "BICYCLING", "PATINETE", "Valenbisi", "METRO", "BUS", "TRAIN", "ELECTRIC_MOTORBIKE", "TAXI"];
