@@ -909,8 +909,12 @@ body.dark-mode .leaflet-popup-tip {
       .then(res => res.json())
       .then(cfg => {
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${cfg.apiKey}&libraries=geometry,places`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${cfg.apiKey}&libraries=geometry,places&auth_referrer_policy=origin`;
         script.async = true;
+
+        script.onerror = () => {
+          console.error('No se pudo cargar Google Maps JS API. Revisa que el dominio actual esté autorizado en la clave (por ejemplo, https://ecomovevalencia.es/*).');
+        };
         script.onload = () => window.dispatchEvent(new Event('google-maps-loaded'));
         document.head.appendChild(script);
       });

@@ -74,6 +74,36 @@ const router = express.Router();
 app.use(cors());
 app.use(express.json()); // Asegura que el body se maneje como JSON
 app.use(express.urlencoded({ extended: true }));
+
+function formatPointForLog(point) {
+    if (!point || !Number.isFinite(Number(point.lat)) || !Number.isFinite(Number(point.lng))) {
+        return 'desconocido';
+    }
+    return `${Number(point.lat).toFixed(6)},${Number(point.lng).toFixed(6)}`;
+}
+
+app.get('/', (req, res) => {
+    console.log(`[LOG] Usuario ha entrado en la web desde ${req.ip}.`);
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.post('/api/log-route-request', (req, res) => {
+    const { actionType, mode, origin, destination } = req.body || {};
+    const originText = formatPointForLog(origin);
+    const destinationText = formatPointForLog(destination);
+
+    if (actionType === 'COMPARE_ALL') {
+        console.log(`[LOG] Usuario ha pedido comparar todos entre ${originText} y ${destinationText}.`);
+    } else if (actionType === 'AI_PICK') {
+        console.log(`[LOG] Usuario ha pedido a la IA escoger ruta entre ${originText} y ${destinationText}.`);
+    } else {
+        const modeText = mode || 'desconocido';
+        console.log(`[LOG] Usuario ha pedido ruta en ${modeText} entre ${originText} y ${destinationText}.`);
+    }
+
+    return res.json({ ok: true });
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Endpoint para proporcionar la clave de Google Maps al cliente
